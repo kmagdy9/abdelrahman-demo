@@ -129,10 +129,6 @@
         <div id="content-area" class="p-4 md:p-8 max-w-5xl mx-auto h-full"></div>
     </main>
 
-    <button onclick="openModal(currentView === 'landing' ? 'work' : currentView)" class="fixed bottom-24 right-4 md:bottom-10 md:right-10 w-14 h-14 bg-brand-900 hover:bg-gray-800 text-white rounded-full shadow-2xl flex items-center justify-center text-2xl z-40 transition transform hover:scale-110 active:scale-95 border-4 border-white/20">
-        <i class="fa-solid fa-plus"></i>
-    </button>
-
     <nav class="md:hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-lg border-t border-gray-200 flex justify-around items-center p-2 z-30 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] safe-pb">
         <button onclick="switchView('work')" id="mob-work" class="flex flex-col items-center gap-1 p-2 text-gray-400"><i class="fa-solid fa-briefcase text-xl"></i><span class="text-[10px] font-bold" data-key="nav_work">Work</span></button>
         <button onclick="switchView('home')" id="mob-home" class="flex flex-col items-center gap-1 p-2 text-gray-400"><i class="fa-solid fa-house text-xl"></i><span class="text-[10px] font-bold" data-key="nav_home">Home</span></button>
