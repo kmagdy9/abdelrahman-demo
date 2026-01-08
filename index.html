@@ -26,8 +26,8 @@
                         brand: { 900: '#111827' },
                         ksa: { 500: '#15803d', 50: '#f0fdf4', 100: '#dcfce7' },
                         eg: { 500: '#ce1126', 50: '#fef2f2', 100: '#fee2e2' },
-                        learning: { 500: '#3b82f6', 600: '#2563eb', 50: '#eff6ff', 100: '#dbeafe' },
-                        life: { 500: '#ec4899', 600: '#db2777', 50: '#fdf2f8', 100: '#fce7f3' }
+                        learning: { 500: '#3b82f6', 600: '#2563eb', 50: '#eff6ff', 100: '#dbeafe' }, // Blue
+                        life: { 500: '#ec4899', 600: '#db2777', 50: '#fdf2f8', 100: '#fce7f3' } // Pink
                     },
                     fontFamily: {
                         sans: ['Poppins', 'sans-serif']
@@ -45,7 +45,6 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Customizing Flatpickr to match the theme */
         .flatpickr-calendar { border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: none; font-family: 'Poppins', sans-serif; }
         .flatpickr-time input:hover, .flatpickr-time .flatpickr-am-pm:hover, .flatpickr-time input:focus, .flatpickr-time .flatpickr-am-pm:focus { background: #f3f4f6; }
         
@@ -282,41 +281,25 @@
         let historySubView = 'main'; 
         const today = new Date();
         let historyMonthFilter = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+        let historyYearFilter = new Date().getFullYear(); 
+        
+        let currentMobileTab = 'today';
 
-        // Initialize Flatpickr instances
         let datePicker, rescheduleDatePicker, timePickerFrom, timePickerTo, rescheduleTimePickerFrom, rescheduleTimePickerTo;
 
         document.addEventListener('DOMContentLoaded', () => {
-             // Date Pickers
              datePicker = flatpickr("#taskDate", { dateFormat: "Y-m-d", disableMobile: "true" });
              rescheduleDatePicker = flatpickr("#newRescheduleDate", { dateFormat: "Y-m-d", disableMobile: "true" });
              
-             // Main Time Pickers
              timePickerFrom = flatpickr("#taskTimeFrom", { enableTime: true, noCalendar: true, dateFormat: "h:i K", time_24hr: false, disableMobile: "true" });
              timePickerTo = flatpickr("#taskTimeTo", { enableTime: true, noCalendar: true, dateFormat: "h:i K", time_24hr: false, disableMobile: "true" });
 
-             // Reschedule Time Pickers
              rescheduleTimePickerFrom = flatpickr("#rescheduleTimeFrom", { enableTime: true, noCalendar: true, dateFormat: "h:i K", time_24hr: false, disableMobile: "true" });
              rescheduleTimePickerTo = flatpickr("#rescheduleTimeTo", { enableTime: true, noCalendar: true, dateFormat: "h:i K", time_24hr: false, disableMobile: "true" });
 
              updateDate();
              renderContent();
         });
-
-        function updateStaticText() {
-            document.querySelectorAll('[data-key]').forEach(el => {
-                const key = el.getAttribute('data-key');
-                if(txt[key]) el.innerText = txt[key];
-            });
-            const tTitle = document.getElementById('taskTitle');
-            if(tTitle) tTitle.placeholder = txt.task_placeholder;
-            
-            const titleEl = document.getElementById('page-title');
-            if(titleEl) {
-                const viewKey = `page_${currentView === 'landing' ? 'dashboard' : currentView}`;
-                if(txt[viewKey]) titleEl.innerText = txt[viewKey];
-            }
-        }
 
         function updateDate() {
             document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -344,38 +327,64 @@
             const activeBtn = document.getElementById(`nav-${view}`); if(activeBtn && themes[view]) activeBtn.className = `nav-btn px-5 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all border border-transparent ${themes[view].active}`;
             document.querySelectorAll('nav:not(#desktop-nav) button').forEach(btn => btn.classList.remove('mobile-nav-active', 'text-brand-900'));
             if(document.getElementById(`mob-${view}`)) { document.getElementById(`mob-${view}`).classList.add('mobile-nav-active', 'text-brand-900'); document.getElementById(`mob-${view}`).classList.remove('text-gray-400'); }
+            
             const titleEl = document.getElementById('page-title');
             const viewKey = `page_${view === 'landing' ? 'dashboard' : view}`;
             if(titleEl && txt[viewKey]) titleEl.innerText = txt[viewKey];
+            
+            currentMobileTab = 'today';
             renderContent();
         }
 
-        function setHistoryView(subView) {
-            historySubView = subView;
-            renderContent();
-        }
-        
-        function setHistoryMonth(month) {
-            historyMonthFilter = month;
-            const searchInput = document.querySelector('#historySearchInput');
-            const searchValue = searchInput ? searchInput.value : '';
-            renderContent(searchValue);
-        }
-
-        function scrollMonths(direction) {
-            const container = document.getElementById('monthScroller');
-            if(container) {
-                const scrollAmount = 300; 
-                if(direction === 'left') {
-                    container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
-                } else {
-                    container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-                }
+        function switchMobileTab(tab) {
+            currentMobileTab = tab;
+            const indicator = document.getElementById('mobile-tab-indicator');
+            const btns = document.querySelectorAll('.mobile-tab-btn');
+            
+            if(indicator) {
+                if(tab === 'today') indicator.style.transform = 'translateX(0%)';
+                if(tab === 'week') indicator.style.transform = 'translateX(100%)';
+                if(tab === 'later') indicator.style.transform = 'translateX(200%)';
             }
+            
+            document.getElementById('col-today').classList.add('hidden');
+            document.getElementById('col-week').classList.add('hidden');
+            document.getElementById('col-later').classList.add('hidden');
+            document.getElementById(`col-${tab}`).classList.remove('hidden');
         }
 
+        function setHistoryView(subView) { historySubView = subView; renderContent(); }
+        function setHistoryMonth(month) { historyMonthFilter = month; const searchInput = document.querySelector('#historySearchInput'); const searchValue = searchInput ? searchInput.value : ''; renderContent(searchValue); }
+        
+        function changeHistoryYear(delta) {
+            historyYearFilter += delta;
+            renderContent();
+        }
+
+        function scrollMonths(direction) { const container = document.getElementById('monthScroller'); if(container) { const scrollAmount = 300; if(direction === 'left') container.scrollBy({ left: -scrollAmount, behavior: 'smooth' }); else container.scrollBy({ left: scrollAmount, behavior: 'smooth' }); } }
         function switchWorkLoc(loc) { workLocation = loc; renderContent(); }
         function switchPersonalSub(sub) { personalSub = sub; renderContent(); }
+
+        function filterHistoryLive(query) {
+            const items = document.querySelectorAll('.timeline-item');
+            const noResultsMsg = document.getElementById('historyNoResults');
+            let hasVisible = false;
+
+            items.forEach(item => {
+                const title = item.querySelector('h4').innerText.toLowerCase();
+                if (title.includes(query.toLowerCase())) {
+                    item.classList.remove('hidden');
+                    hasVisible = true;
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+
+            if (noResultsMsg) {
+                if (!hasVisible && items.length > 0) noResultsMsg.classList.remove('hidden');
+                else noResultsMsg.classList.add('hidden');
+            }
+        }
 
         function renderContent(searchQuery = '') {
             const container = document.getElementById('content-area');
@@ -527,12 +536,114 @@
             const done = filteredTasks.filter(t => t.status === 'done').length;
             const late = filteredTasks.filter(t => isOverdue(t)).length; 
             
+            // --- Calculate Task Counts for Tabs ---
+            const now = new Date(); now.setHours(0,0,0,0);
+            const nextWeek = new Date(now); nextWeek.setDate(now.getDate() + 7);
+
+            const countToday = filteredTasks.filter(t => {
+                if (t.status === 'done') return false;
+                const d = new Date(t.date);
+                return d <= now;
+            }).length;
+
+            const countWeek = filteredTasks.filter(t => {
+                if (t.status === 'done') return false;
+                const d = new Date(t.date);
+                return d > now && d <= nextWeek;
+            }).length;
+
+            const countLater = filteredTasks.filter(t => {
+                if (t.status === 'done') return false;
+                const d = new Date(t.date);
+                return d > nextWeek;
+            }).length;
+            // ---------------------------------------
+
             let theme;
             if (category === 'work') theme = {btn: 'bg-work-600 hover:bg-work-900', txt: 'text-work-600', border: 'border-work-200'};
             else if (category === 'home') theme = {btn: 'bg-home-600 hover:bg-home-900', txt: 'text-home-600', border: 'border-home-200'};
             else theme = {btn: 'bg-personal-600 hover:bg-personal-900', txt: 'text-personal-600', border: 'border-personal-200'};
             
-            container.innerHTML = `<div class="animate-fade">${subNav}<div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4"><div class="flex gap-4 w-full md:w-auto overflow-x-auto pb-2 no-scrollbar"><div class="bg-white px-6 py-4 rounded-2xl shadow-sm border border-gray-200 text-center flex-shrink-0 min-w-[100px]"><span class="block text-2xl font-bold text-gray-800">${total}</span><span class="text-xs text-gray-500 font-bold">${txt.total}</span></div><div class="bg-white px-6 py-4 rounded-2xl shadow-sm border ${theme.border} text-center flex-shrink-0 min-w-[100px]"><span class="block text-2xl font-bold text-green-600">${done}</span><span class="text-xs text-gray-500 font-bold">${txt.done}</span></div><div class="bg-white px-6 py-4 rounded-2xl shadow-sm border border-red-200 text-center flex-shrink-0 relative overflow-hidden min-w-[100px]">${late > 0 ? '<div class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-ping"></div>' : ''}<span class="block text-2xl font-bold text-red-600">${late}</span><span class="text-xs text-gray-500 font-bold">${txt.overdue}</span></div></div><button onclick="openModal('${category}')" type="button" class="${theme.btn} text-white py-4 px-8 rounded-2xl shadow-lg shadow-indigo-500/20 font-bold flex items-center justify-center gap-3 transition transform active:scale-95 w-full md:w-auto hover:-translate-y-1"><i class="fa-solid fa-plus text-lg"></i><span>${txt.btn_new}</span></button></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-6">${renderColumn(txt.col_today, filteredTasks, 'today', theme.txt, txt)}${renderColumn(txt.col_week, filteredTasks, 'week', theme.txt, txt)}${renderColumn(txt.col_later, filteredTasks, 'later', theme.txt, txt)}</div></div>`;
+            // Badge HTML Helper
+            const badgeHTML = (count, color) => count > 0 ? `<span class="absolute top-1.5 right-2 w-4 h-4 ${color} text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-sm z-20 transition-transform">${count}</span>` : '';
+
+            // Modern Sliding Tabs for Mobile with Badges
+            const mobileTabs = `
+                <div class="relative bg-gray-200/50 p-1 rounded-2xl flex mb-6 md:hidden select-none">
+                    <div id="mobile-tab-indicator" class="absolute top-1 left-1 bottom-1 w-[calc(33.33%-0.33rem)] bg-white rounded-xl shadow-sm transition-all duration-300 ease-out transform translate-x-0"></div>
+                    
+                    <button onclick="switchMobileTab('today')" class="relative z-10 flex-1 py-2.5 text-xs font-bold text-gray-700 transition-colors mobile-tab-btn flex items-center justify-center" data-tab="today">
+                        ${txt.col_today.split(' ')[0]}
+                        ${badgeHTML(countToday, 'bg-red-500')}
+                    </button>
+                    
+                    <button onclick="switchMobileTab('week')" class="relative z-10 flex-1 py-2.5 text-xs font-bold text-gray-500 transition-colors mobile-tab-btn flex items-center justify-center" data-tab="week">
+                        ${txt.col_week.split(' ')[0]}
+                        ${badgeHTML(countWeek, 'bg-blue-500')}
+                    </button>
+                    
+                    <button onclick="switchMobileTab('later')" class="relative z-10 flex-1 py-2.5 text-xs font-bold text-gray-500 transition-colors mobile-tab-btn flex items-center justify-center" data-tab="later">
+                        ${txt.col_later.split(' ')[0]}
+                        ${badgeHTML(countLater, 'bg-gray-400')}
+                    </button>
+                </div>
+            `;
+
+            container.innerHTML = `
+            <div class="animate-fade">
+                ${subNav}
+                <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+                    <div class="flex gap-4 w-full md:w-auto overflow-x-auto pb-2 no-scrollbar">
+                        <div class="bg-white px-6 py-4 rounded-2xl shadow-sm border border-gray-200 text-center flex-shrink-0 min-w-[100px]">
+                            <span class="block text-2xl font-bold text-gray-800">${total}</span>
+                            <span class="text-xs text-gray-500 font-bold">${txt.total}</span>
+                        </div>
+                        <div class="bg-white px-6 py-4 rounded-2xl shadow-sm border ${theme.border} text-center flex-shrink-0 min-w-[100px]">
+                            <span class="block text-2xl font-bold text-green-600">${done}</span>
+                            <span class="text-xs text-gray-500 font-bold">${txt.done}</span>
+                        </div>
+                        <div class="bg-white px-6 py-4 rounded-2xl shadow-sm border border-red-200 text-center flex-shrink-0 relative overflow-hidden min-w-[100px]">
+                            ${late > 0 ? '<div class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-ping"></div>' : ''}
+                            <span class="block text-2xl font-bold text-red-600">${late}</span>
+                            <span class="text-xs text-gray-500 font-bold">${txt.overdue}</span>
+                        </div>
+                    </div>
+                    <button onclick="openModal('${category}')" type="button" class="${theme.btn} text-white py-4 px-8 rounded-2xl shadow-lg shadow-indigo-500/20 font-bold flex items-center justify-center gap-3 transition transform active:scale-95 w-full md:w-auto hover:-translate-y-1">
+                        <i class="fa-solid fa-plus text-lg"></i><span>${txt.btn_new}</span>
+                    </button>
+                </div>
+                
+                ${mobileTabs}
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
+                    <div id="col-today" class="${currentMobileTab === 'today' ? 'block' : 'hidden'} md:block animate-fade">
+                        ${renderColumn(txt.col_today, filteredTasks, 'today', theme.txt, txt)}
+                    </div>
+                    <div id="col-week" class="${currentMobileTab === 'week' ? 'block' : 'hidden'} md:block animate-fade">
+                        ${renderColumn(txt.col_week, filteredTasks, 'week', theme.txt, txt)}
+                    </div>
+                    <div id="col-later" class="${currentMobileTab === 'later' ? 'block' : 'hidden'} md:block animate-fade">
+                        ${renderColumn(txt.col_later, filteredTasks, 'later', theme.txt, txt)}
+                    </div>
+                </div>
+            </div>`;
+            
+            setTimeout(() => {
+                const btns = document.querySelectorAll('.mobile-tab-btn');
+                btns.forEach(b => {
+                    if(b.getAttribute('data-tab') === currentMobileTab) {
+                        b.classList.remove('text-gray-500');
+                        b.classList.add('text-gray-800');
+                    }
+                });
+                
+                const indicator = document.getElementById('mobile-tab-indicator');
+                if(indicator) {
+                    if(currentMobileTab === 'today') indicator.style.transform = 'translateX(0%)';
+                    else if(currentMobileTab === 'week') indicator.style.transform = 'translateX(100%)';
+                    else indicator.style.transform = 'translateX(200%)';
+                }
+            }, 50);
         }
 
         function renderColumn(title, list, filter, colorClass, txt) {
@@ -546,7 +657,7 @@
                 return d > nextWeek;
             });
             items.sort((a,b) => new Date(a.date) - new Date(b.date));
-            return `<div class="bg-white/60 backdrop-blur-md p-4 rounded-3xl min-h-[150px] md:min-h-[400px] border border-gray-200 flex flex-col"><h3 class="font-bold mb-4 ${colorClass} text-lg flex justify-between items-center px-2">${title} <span class="bg-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm text-gray-500 border border-gray-100">${items.length}</span></h3><div class="space-y-3 flex-1">${items.map(t => getTaskCardHTML(t, txt)).join('')}${items.length === 0 ? `<div class="h-full flex flex-col items-center justify-center text-gray-300 gap-2 min-h-[100px]"><i class="fa-solid fa-check-circle text-3xl opacity-20"></i><p class="text-xs font-bold">${txt.empty_col}</p></div>` : ''}</div></div>`;
+            return `<div class="bg-white/60 backdrop-blur-md p-4 rounded-3xl min-h-[400px] border border-gray-200 flex flex-col"><h3 class="font-bold mb-4 ${colorClass} text-lg flex justify-between items-center px-2">${title} <span class="bg-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm text-gray-500 border border-gray-100">${items.length}</span></h3><div class="space-y-3 flex-1">${items.map(t => getTaskCardHTML(t, txt)).join('')}${items.length === 0 ? `<div class="h-full flex flex-col items-center justify-center text-gray-300 gap-2 min-h-[100px]"><i class="fa-solid fa-check-circle text-3xl opacity-20"></i><p class="text-xs font-bold">${txt.empty_col}</p></div>` : ''}</div></div>`;
         }
         
         function getTaskCardHTML(t, txt) {
@@ -561,7 +672,6 @@
 
             let timeDisplay = '';
             if (t.timeFrom) {
-                // Flatpickr saves formatted string ("10:00 PM"), so we display it directly
                 const start = t.timeFrom;
                 const end = t.timeTo ? ` - ${t.timeTo}` : '';
                 timeDisplay = `<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold border border-gray-200 ml-2"><i class="fa-regular fa-clock text-[9px] mr-1"></i>${start}${end}</span>`;
@@ -597,8 +707,8 @@
             const title = document.getElementById('taskTitle').value; 
             const category = document.getElementById('taskCategory').value; 
             const date = document.getElementById('taskDate').value; 
-            const timeFrom = document.getElementById('taskTimeFrom').value; // Get Time From (Formatted)
-            const timeTo = document.getElementById('taskTimeTo').value;     // Get Time To (Formatted)
+            const timeFrom = document.getElementById('taskTimeFrom').value; 
+            const timeTo = document.getElementById('taskTimeTo').value; 
 
             if(!title) return; 
             
@@ -610,8 +720,8 @@
                 title, 
                 category, 
                 date, 
-                timeFrom: timeFrom || null, // Store time string
-                timeTo: timeTo || null,     // Store time string
+                timeFrom: timeFrom || null, 
+                timeTo: timeTo || null, 
                 status: 'open', 
                 workLocation: loc, 
                 personalType: pType, 
@@ -648,7 +758,7 @@
                                 </div>
                                 <span class="font-bold text-xl text-gray-700 group-hover:text-home-600 transition-colors">${txt.hist_home_btn}</span>
                             </button>
-                            <button onclick="setHistoryView('personal')" class="glass hover:bg-white p-8 rounded-[2rem] flex flex-col items-center gap-4 group transition-all duration-300 hover:scale-[1.02] shadow-sm hover:shadow-xl border border-white/40">
+                            <button onclick="setHistoryView('personal_select')" class="glass hover:bg-white p-8 rounded-[2rem] flex flex-col items-center gap-4 group transition-all duration-300 hover:scale-[1.02] shadow-sm hover:shadow-xl border border-white/40">
                                 <div class="w-20 h-20 bg-gradient-to-br from-personal-100 to-white rounded-full flex items-center justify-center group-hover:from-personal-600 group-hover:to-personal-500 transition-all shadow-inner">
                                     <i class="fa-solid fa-user text-3xl text-personal-600 group-hover:text-white transition-colors"></i>
                                 </div>
@@ -679,6 +789,27 @@
                     </div>
                 `;
             }
+            else if (historySubView === 'personal_select') {
+                c.innerHTML = `
+                    <div class="animate-fade pb-20 pt-10 px-2 flex flex-col items-center justify-center h-full gap-8">
+                        <button onclick="setHistoryView('main')" class="bg-white/50 px-4 py-2 rounded-full text-gray-500 hover:text-gray-800 font-bold flex items-center gap-2 transition hover:bg-white"><i class="fa-solid fa-arrow-left"></i> ${txt.hist_back}</button>
+                        <div class="text-center">
+                            <h3 class="text-2xl font-bold text-personal-600">${txt.hist_personal_btn}</h3>
+                            <p class="text-gray-400 text-sm">Select Category</p>
+                        </div>
+                        <div class="flex flex-col md:flex-row gap-6 w-full max-w-lg justify-center">
+                            <button onclick="setHistoryView('personal_learning')" class="glass p-8 rounded-3xl flex flex-col items-center gap-4 hover:scale-105 transition hover:shadow-xl flex-1 group">
+                                <div class="w-16 h-16 bg-learning-100 rounded-full flex items-center justify-center text-3xl group-hover:bg-learning-600 group-hover:text-white transition-colors">📚</div>
+                                <span class="font-bold text-xl text-gray-700">${txt.type_learning}</span>
+                            </button>
+                            <button onclick="setHistoryView('personal_life')" class="glass p-8 rounded-3xl flex flex-col items-center gap-4 hover:scale-105 transition hover:shadow-xl flex-1 group">
+                                <div class="w-16 h-16 bg-life-100 rounded-full flex items-center justify-center text-3xl group-hover:bg-life-600 group-hover:text-white transition-colors">🌱</div>
+                                <span class="font-bold text-xl text-gray-700">${txt.type_life}</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
             else {
                 let baseList = []; 
                 let title = '';
@@ -690,11 +821,16 @@
                     title = txt.hist_home_btn;
                     backView = 'main';
                     themeColor = 'text-home-600';
-                } else if (historySubView === 'personal') {
-                    baseList = tasks.filter(t => t.status === 'done' && t.category === 'personal');
-                    title = txt.hist_personal_btn;
-                    backView = 'main';
-                    themeColor = 'text-personal-600';
+                } else if (historySubView === 'personal_learning') {
+                    baseList = tasks.filter(t => t.status === 'done' && t.category === 'personal' && t.personalType === 'learning');
+                    title = txt.type_learning;
+                    backView = 'personal_select';
+                    themeColor = 'text-learning-600';
+                } else if (historySubView === 'personal_life') {
+                    baseList = tasks.filter(t => t.status === 'done' && t.category === 'personal' && (t.personalType === 'life' || !t.personalType));
+                    title = txt.type_life;
+                    backView = 'personal_select';
+                    themeColor = 'text-life-600';
                 } else if (historySubView === 'work_eg') {
                     baseList = tasks.filter(t => t.status === 'done' && t.category === 'work' && t.workLocation === 'egypt');
                     title = txt.loc_egypt;
@@ -707,21 +843,18 @@
                     themeColor = 'text-work-600';
                 }
 
-                const now = new Date();
-                const currentYear = now.getFullYear();
+                // --- Generate Months based on Selected Year ---
                 const generatedMonths = [];
                 for (let m = 1; m <= 12; m++) {
                     const monthStr = String(m).padStart(2, '0');
-                    generatedMonths.push(`${currentYear}-${monthStr}`);
+                    generatedMonths.push(`${historyYearFilter}-${monthStr}`); // Use historyYearFilter
                 }
                
                 let displayList = [...baseList];
                 if (historyMonthFilter !== 'all') {
                     displayList = displayList.filter(t => t.date && t.date.startsWith(historyMonthFilter));
                 }
-                if (searchQuery.trim() !== '') {
-                    displayList = displayList.filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase()));
-                }
+                
                 displayList.sort((a,b) => new Date(b.date) - new Date(a.date));
 
                 const formatMonthShort = (mStr) => {
@@ -747,6 +880,12 @@
                             <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-xl shadow-sm">🏆</div>
                         </div>
 
+                        <div class="flex items-center justify-center gap-6 mb-4">
+                            <button onclick="changeHistoryYear(-1)" class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-600 hover:bg-gray-100 transition"><i class="fa-solid fa-chevron-left"></i></button>
+                            <span class="text-2xl font-black text-gray-800 tracking-tight">${historyYearFilter}</span>
+                            <button onclick="changeHistoryYear(1)" class="w-10 h-10 rounded-full bg-white shadow-sm flex items-center justify-center text-gray-600 hover:bg-gray-100 transition"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+
                         <div class="relative group mb-8">
                              <button onclick="scrollMonths('left')" class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 shadow-md w-10 h-10 rounded-full hidden md:flex items-center justify-center text-gray-600 hover:text-brand-900 transition hover:scale-110 -ml-4 border border-gray-100"><i class="fa-solid fa-chevron-left"></i></button>
                              
@@ -766,11 +905,15 @@
                         </div>
 
                         <div class="relative w-full mb-8">
-                            <input type="text" id="historySearchInput" onkeyup="renderContent(this.value)" placeholder="${txt.hist_search}" class="w-full pl-12 pr-4 py-4 rounded-2xl border-none bg-white shadow-sm focus:ring-2 focus:ring-brand-900 outline-none transition text-gray-600" value="${searchQuery}">
+                            <input type="text" id="historySearchInput" oninput="filterHistoryLive(this.value)" placeholder="${txt.hist_search}" class="w-full pl-12 pr-4 py-4 rounded-2xl border-none bg-white shadow-sm focus:ring-2 focus:ring-brand-900 outline-none transition text-gray-600" value="${searchQuery}">
                             <i class="fa-solid fa-search absolute left-5 top-5 text-gray-300"></i>
                         </div>
 
                         <div class="space-y-0 relative pl-4 md:pl-8">
+                            <div id="historyNoResults" class="hidden flex flex-col items-center justify-center py-8 text-gray-400">
+                                <i class="fa-solid fa-ghost text-2xl mb-2"></i>
+                                <span class="text-sm">No items match your search.</span>
+                            </div>
                             ${displayList.length === 0 ? `
                                 <div class="flex flex-col items-center justify-center py-12 text-gray-300 gap-4 animate-fade">
                                     <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center text-4xl mb-2 opacity-50">👻</div>
@@ -845,20 +988,15 @@
             }
         }
         function openBatchRescheduleModal() { document.getElementById('warningModal').classList.add('hidden'); openRescheduleModal(null, 'batch'); }
-        
         function openRescheduleModal(id, mode) { 
             taskToRescheduleId = id; 
             rescheduleMode = mode; 
             document.getElementById('rescheduleModal').classList.remove('hidden'); 
-            
-            // Set default date to today
             rescheduleDatePicker.setDate(new Date()); 
             
-            // Clear or Set Time Pickers
             rescheduleTimePickerFrom.clear();
             rescheduleTimePickerTo.clear();
 
-            // If editing a single task, try to pre-fill existing time
             if(mode === 'single' && id) {
                 const task = tasks.find(t => t.id === id);
                 if(task) {
@@ -867,9 +1005,7 @@
                 }
             }
         }
-        
         function closeRescheduleModal() { document.getElementById('rescheduleModal').classList.add('hidden'); taskToRescheduleId = null; if (rescheduleMode === 'batch' || rescheduleMode === 'single') checkOverduePopup(); }
-        
         function confirmReschedule() { 
             const newDate = document.getElementById('newRescheduleDate').value; 
             const newTimeFrom = document.getElementById('rescheduleTimeFrom').value;
@@ -878,14 +1014,11 @@
             if(!newDate) return; 
             
             if (rescheduleMode === 'batch') { 
-                // Batch reschedule: Apply date to all. Apply time ONLY if user selected one.
                 tasks = tasks.map(t => {
                     if(isOverdue(t)) {
                         return {
                             ...t, 
                             date: newDate,
-                            // If user picked a time in batch mode, apply it. Otherwise keep old time or null? 
-                            // Usually batch reschedule is just for date, but let's allow overwriting time if specified.
                             timeFrom: newTimeFrom || t.timeFrom,
                             timeTo: newTimeTo || t.timeTo
                         };
@@ -897,7 +1030,7 @@
                 tasks = tasks.map(t => t.id === taskToRescheduleId ? {
                     ...t, 
                     date: newDate,
-                    timeFrom: newTimeFrom || null, // If cleared, save as null
+                    timeFrom: newTimeFrom || null, 
                     timeTo: newTimeTo || null
                 } : t); 
             } 
@@ -911,7 +1044,6 @@
         function closeModal() { 
             document.getElementById('taskModal').classList.add('hidden'); 
             document.getElementById('taskTitle').value = ''; 
-            // Clear Pickers
             if(datePicker) datePicker.clear();
             if(timePickerFrom) timePickerFrom.clear();
             if(timePickerTo) timePickerTo.clear();
