@@ -8,6 +8,10 @@
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -21,7 +25,9 @@
                         personal: { 500: '#a855f7', 600: '#9333ea', 200: '#e9d5ff', 100: '#f3e8ff', 50: '#faf5ff', 900: '#581c87' },
                         brand: { 900: '#111827' },
                         ksa: { 500: '#15803d', 50: '#f0fdf4', 100: '#dcfce7' },
-                        eg: { 500: '#ce1126', 50: '#fef2f2', 100: '#fee2e2' }
+                        eg: { 500: '#ce1126', 50: '#fef2f2', 100: '#fee2e2' },
+                        learning: { 500: '#3b82f6', 600: '#2563eb', 50: '#eff6ff', 100: '#dbeafe' },
+                        life: { 500: '#ec4899', 600: '#db2777', 50: '#fdf2f8', 100: '#fce7f3' }
                     },
                     fontFamily: {
                         sans: ['Poppins', 'sans-serif']
@@ -38,6 +44,10 @@
         .animate-slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Customizing Flatpickr to match the theme */
+        .flatpickr-calendar { border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: none; font-family: 'Poppins', sans-serif; }
+        .flatpickr-time input:hover, .flatpickr-time .flatpickr-am-pm:hover, .flatpickr-time input:focus, .flatpickr-time .flatpickr-am-pm:focus { background: #f3f4f6; }
         
         .timeline-line::before {
             content: ''; position: absolute; top: 2rem; bottom: -2rem; left: 1rem; width: 2px; background: #e5e7eb; z-index: 0;
@@ -119,6 +129,10 @@
         <div id="content-area" class="p-4 md:p-8 max-w-5xl mx-auto h-full"></div>
     </main>
 
+    <button onclick="openModal(currentView === 'landing' ? 'work' : currentView)" class="fixed bottom-24 right-4 md:bottom-10 md:right-10 w-14 h-14 bg-brand-900 hover:bg-gray-800 text-white rounded-full shadow-2xl flex items-center justify-center text-2xl z-40 transition transform hover:scale-110 active:scale-95 border-4 border-white/20">
+        <i class="fa-solid fa-plus"></i>
+    </button>
+
     <nav class="md:hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-lg border-t border-gray-200 flex justify-around items-center p-2 z-30 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] safe-pb">
         <button onclick="switchView('work')" id="mob-work" class="flex flex-col items-center gap-1 p-2 text-gray-400"><i class="fa-solid fa-briefcase text-xl"></i><span class="text-[10px] font-bold" data-key="nav_work">Work</span></button>
         <button onclick="switchView('home')" id="mob-home" class="flex flex-col items-center gap-1 p-2 text-gray-400"><i class="fa-solid fa-house text-xl"></i><span class="text-[10px] font-bold" data-key="nav_home">Home</span></button>
@@ -139,17 +153,18 @@
             </div>
         </div>
     </div>
-    <div id="taskModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm transition-opacity p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-pop transform scale-100">
+    
+    <div id="taskModal" class="fixed inset-0 bg-black/60 hidden z-[100] flex items-center justify-center backdrop-blur-sm transition-opacity p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-pop transform scale-100 relative">
             <div id="modalHeader" class="p-4 md:p-5 flex justify-between items-center text-white bg-gray-800">
                 <h3 class="text-lg md:text-xl font-bold flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i> <span data-key="modal_add_title">New Task</span></h3>
                 <button onclick="closeModal()" class="text-white hover:text-gray-300"><i class="fa-solid fa-xmark fa-lg"></i></button>
             </div>
             <form onsubmit="event.preventDefault(); saveTask();" class="p-4 md:p-6">
                 <input type="hidden" id="taskCategory">
-                <div id="workLocationBadge" class="hidden mb-4 p-3 bg-gray-50 rounded-lg text-center border border-gray-200">
+                <div id="subCategoryBadge" class="hidden mb-4 p-3 bg-gray-50 rounded-lg text-center border border-gray-200">
                     <span class="text-xs text-gray-500 font-bold block mb-1">Adding to:</span>
-                    <span id="locBadgeText" class="font-bold text-lg"></span>
+                    <span id="badgeText" class="font-bold text-lg"></span>
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-bold mb-2 text-gray-700" data-key="modal_task_label">Title</label>
@@ -157,8 +172,27 @@
                 </div>
                 <div class="mb-4">
                     <label class="block text-sm font-bold mb-2 text-gray-700" data-key="modal_date_label">Date</label>
-                    <input type="date" id="taskDate" class="w-full p-3 border-2 border-gray-200 rounded-xl bg-gray-50 outline-none" required>
+                    <input type="text" id="taskDate" class="w-full p-3 border-2 border-gray-200 rounded-xl bg-gray-50 outline-none" placeholder="Select Date" required>
                 </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold mb-2 text-gray-700">Time (Optional)</label>
+                    <div class="flex gap-4">
+                        <div class="flex-1 relative">
+                            <input type="text" id="taskTimeFrom" class="w-full p-3 pl-10 border-2 border-gray-200 rounded-xl bg-gray-50 outline-none focus:border-brand-900 transition cursor-pointer" placeholder="--:-- --" readonly>
+                            <i class="fa-regular fa-clock absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <span class="text-[10px] text-gray-400 font-bold ml-1">From</span>
+                        </div>
+                        <div class="flex-1 relative">
+                            <input type="text" id="taskTimeTo" class="w-full p-3 pl-10 border-2 border-gray-200 rounded-xl bg-gray-50 outline-none focus:border-brand-900 transition cursor-pointer" placeholder="--:-- --" readonly>
+                            <i class="fa-regular fa-clock absolute left-3.5 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                            <div class="absolute right-3 top-3.5 cursor-pointer text-gray-300 hover:text-red-400" onclick="clearTime('taskTimeTo', event)">
+                                <i class="fa-solid fa-xmark text-xs"></i>
+                            </div>
+                            <span class="text-[10px] text-gray-400 font-bold ml-1">To</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex justify-end gap-3 pt-4 border-t mt-4">
                     <button type="button" onclick="closeModal()" class="px-5 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-bold text-sm" data-key="btn_cancel">Cancel</button>
                     <button type="submit" id="saveBtn" class="px-6 py-2 bg-gray-800 text-white rounded-lg hover:opacity-90 shadow-lg font-bold transition transform active:scale-95 text-sm md:text-base" data-key="btn_save">Save</button>
@@ -166,6 +200,7 @@
             </form>
         </div>
     </div>
+
     <div id="rescheduleModal" class="fixed inset-0 bg-black/60 hidden z-[70] flex items-center justify-center backdrop-blur-sm transition-opacity p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-pop transform scale-100">
             <div class="p-4 bg-blue-600 text-white flex justify-between items-center">
@@ -173,8 +208,23 @@
                 <button onclick="closeRescheduleModal()" class="text-white hover:text-gray-200"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <div class="p-6">
-                <label class="block text-sm font-bold mb-2 text-gray-700" data-key="modal_new_date">New Date</label>
-                <input type="date" id="newRescheduleDate" class="w-full p-3 border-2 border-blue-100 focus:border-blue-500 rounded-xl bg-blue-50 outline-none transition mb-6">
+                <label class="block text-sm font-bold mb-2 text-gray-700" data-key="modal_new_date">New Date & Time</label>
+                <input type="text" id="newRescheduleDate" class="w-full p-3 border-2 border-blue-100 focus:border-blue-500 rounded-xl bg-blue-50 outline-none transition mb-4" placeholder="Select New Date">
+                
+                <div class="flex gap-4 mb-6">
+                    <div class="flex-1 relative">
+                        <input type="text" id="rescheduleTimeFrom" class="w-full p-3 pl-8 border-2 border-blue-100 rounded-xl bg-blue-50 outline-none focus:border-blue-500 transition cursor-pointer text-sm" placeholder="From" readonly>
+                        <i class="fa-regular fa-clock absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-300"></i>
+                    </div>
+                    <div class="flex-1 relative">
+                        <input type="text" id="rescheduleTimeTo" class="w-full p-3 pl-8 border-2 border-blue-100 rounded-xl bg-blue-50 outline-none focus:border-blue-500 transition cursor-pointer text-sm" placeholder="To" readonly>
+                        <i class="fa-regular fa-clock absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-300"></i>
+                         <div class="absolute right-2 top-3 cursor-pointer text-blue-300 hover:text-red-400" onclick="clearTime('rescheduleTimeTo', event)">
+                            <i class="fa-solid fa-xmark text-[10px]"></i>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex gap-3">
                     <button onclick="closeRescheduleModal()" class="flex-1 py-2 text-gray-500 hover:bg-gray-100 rounded-lg font-bold text-sm" data-key="btn_cancel">Cancel</button>
                     <button onclick="confirmReschedule()" class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold shadow-md transition" data-key="btn_confirm">Update</button>
@@ -182,6 +232,7 @@
             </div>
         </div>
     </div>
+    
     <div id="warningModal" class="fixed inset-0 bg-red-900/80 hidden z-[60] flex items-center justify-center backdrop-blur-md p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden animate-shake transform scale-100 border-4 border-red-500">
             <div class="p-4 bg-red-500 text-white flex justify-between items-center">
@@ -215,6 +266,7 @@
             set_title: 'General Settings', set_danger: 'Danger Zone', btn_reset: '🗑️ Reset All Data', confirm_reset: 'Are you sure?', confirm_del: 'Delete Task?',
             reschedule_done: 'Rescheduled successfully! 💪', level_up: 'Level Up! 🎉',
             loc_egypt: 'Egypt 🇪🇬', loc_ksa: 'KSA 🇸🇦',
+            type_learning: 'Learning 📚', type_life: 'Life 🌱',
             modal_reschedule_title: 'Reschedule', modal_new_date: 'Select New Date', btn_confirm: 'Update',
             brief_morning: 'Good Morning, Abdelrahman! ☀️', brief_evening: 'Good Evening, Abdelrahman! 🌙', brief_msg: 'You have {n} tasks for today.', brief_btn: "Let's Go 🚀",
             hist_back: 'Back', hist_work_btn: 'Work 💼', hist_home_btn: 'Home 🏠', hist_personal_btn: 'Personal 👤',
@@ -225,6 +277,7 @@
         let userStats = JSON.parse(localStorage.getItem('lifeOS_stats_v7')) || { level: 1, xp: 0, nextLevelXp: 100, name: 'Abdelrahman' };
         let currentView = 'landing';
         let workLocation = 'egypt'; 
+        let personalSub = 'learning'; 
         let completionChart = null;
         let weeklyChart = null;
         let taskToRescheduleId = null; 
@@ -234,8 +287,25 @@
         const today = new Date();
         let historyMonthFilter = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
 
-        updateDate();
-        renderContent();
+        // Initialize Flatpickr instances
+        let datePicker, rescheduleDatePicker, timePickerFrom, timePickerTo, rescheduleTimePickerFrom, rescheduleTimePickerTo;
+
+        document.addEventListener('DOMContentLoaded', () => {
+             // Date Pickers
+             datePicker = flatpickr("#taskDate", { dateFormat: "Y-m-d", disableMobile: "true" });
+             rescheduleDatePicker = flatpickr("#newRescheduleDate", { dateFormat: "Y-m-d", disableMobile: "true" });
+             
+             // Main Time Pickers
+             timePickerFrom = flatpickr("#taskTimeFrom", { enableTime: true, noCalendar: true, dateFormat: "h:i K", time_24hr: false, disableMobile: "true" });
+             timePickerTo = flatpickr("#taskTimeTo", { enableTime: true, noCalendar: true, dateFormat: "h:i K", time_24hr: false, disableMobile: "true" });
+
+             // Reschedule Time Pickers
+             rescheduleTimePickerFrom = flatpickr("#rescheduleTimeFrom", { enableTime: true, noCalendar: true, dateFormat: "h:i K", time_24hr: false, disableMobile: "true" });
+             rescheduleTimePickerTo = flatpickr("#rescheduleTimeTo", { enableTime: true, noCalendar: true, dateFormat: "h:i K", time_24hr: false, disableMobile: "true" });
+
+             updateDate();
+             renderContent();
+        });
 
         function updateStaticText() {
             document.querySelectorAll('[data-key]').forEach(el => {
@@ -309,6 +379,7 @@
         }
 
         function switchWorkLoc(loc) { workLocation = loc; renderContent(); }
+        function switchPersonalSub(sub) { personalSub = sub; renderContent(); }
 
         function renderContent(searchQuery = '') {
             const container = document.getElementById('content-area');
@@ -324,7 +395,6 @@
             else if (currentView === 'settings') renderSettings(container, txt);
         }
 
-        // Helper to count tasks for "This Week" (upcoming 7 days + today)
         function countWeekly(cat) {
             const now = new Date(); now.setHours(0,0,0,0);
             const nextWeek = new Date(now); nextWeek.setDate(now.getDate() + 7);
@@ -339,8 +409,6 @@
             const workOverdue = countOverdue('work');
             const homeOverdue = countOverdue('home');
             const personalOverdue = countOverdue('personal');
-            
-            // New: Count Weekly Tasks
             const workWeek = countWeekly('work');
             const homeWeek = countWeekly('home');
             const personalWeek = countWeekly('personal');
@@ -400,12 +468,65 @@
         function renderCategoryDashboard(container, category, txt) {
             let filteredTasks = tasks.filter(t => t.category === category);
             let subNav = '';
+            
+            const isWk = (t) => {
+                if(t.status === 'done') return false;
+                const now = new Date(); now.setHours(0,0,0,0);
+                const next = new Date(now); next.setDate(now.getDate() + 7);
+                const d = new Date(t.date);
+                return d >= now && d <= next;
+            };
+
             if (category === 'work') {
+                const egLate = tasks.filter(t => t.category === 'work' && t.workLocation === 'egypt' && isOverdue(t)).length;
+                const egWeek = tasks.filter(t => t.category === 'work' && t.workLocation === 'egypt' && isWk(t)).length;
+                const ksaLate = tasks.filter(t => t.category === 'work' && t.workLocation === 'ksa' && isOverdue(t)).length;
+                const ksaWeek = tasks.filter(t => t.category === 'work' && t.workLocation === 'ksa' && isWk(t)).length;
+
                 filteredTasks = filteredTasks.filter(t => t.workLocation === workLocation || (!t.workLocation && workLocation === 'egypt'));
+                
                 const styleEg = workLocation === 'egypt' ? 'bg-eg-500 text-white shadow-lg scale-105 border-eg-500 ring-2 ring-red-200' : 'bg-white text-gray-500 hover:bg-gray-50 border-gray-200';
                 const styleKsa = workLocation === 'ksa' ? 'bg-ksa-500 text-white shadow-lg scale-105 border-ksa-500 ring-2 ring-green-200' : 'bg-white text-gray-500 hover:bg-gray-50 border-gray-200';
-                subNav = `<div class="flex justify-center gap-4 mb-8"><button onclick="switchWorkLoc('egypt')" class="px-6 py-2.5 rounded-full font-bold text-sm transition-all border flex items-center gap-2 ${styleEg}"><span>${txt.loc_egypt}</span></button><button onclick="switchWorkLoc('ksa')" class="px-6 py-2.5 rounded-full font-bold text-sm transition-all border flex items-center gap-2 ${styleKsa}"><span>${txt.loc_ksa}</span></button></div>`;
+                
+                subNav = `
+                <div class="flex justify-center gap-4 mb-8">
+                    <button onclick="switchWorkLoc('egypt')" class="relative px-6 py-2.5 rounded-full font-bold text-sm transition-all border flex items-center gap-2 ${styleEg}">
+                        <span>${txt.loc_egypt}</span>
+                        ${egLate > 0 ? `<div class="absolute -top-2 -right-1 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm border-2 border-white animate-pulse">${egLate}</div>` : ''}
+                        ${egWeek > 0 ? `<div class="absolute -top-2 -left-1 bg-blue-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm border-2 border-white">${egWeek}</div>` : ''}
+                    </button>
+                    <button onclick="switchWorkLoc('ksa')" class="relative px-6 py-2.5 rounded-full font-bold text-sm transition-all border flex items-center gap-2 ${styleKsa}">
+                        <span>${txt.loc_ksa}</span>
+                        ${ksaLate > 0 ? `<div class="absolute -top-2 -right-1 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm border-2 border-white animate-pulse">${ksaLate}</div>` : ''}
+                        ${ksaWeek > 0 ? `<div class="absolute -top-2 -left-1 bg-blue-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm border-2 border-white">${ksaWeek}</div>` : ''}
+                    </button>
+                </div>`;
+            } else if (category === 'personal') {
+                const learnLate = tasks.filter(t => t.category === 'personal' && t.personalType === 'learning' && isOverdue(t)).length;
+                const learnWeek = tasks.filter(t => t.category === 'personal' && t.personalType === 'learning' && isWk(t)).length;
+                const lifeLate = tasks.filter(t => t.category === 'personal' && (t.personalType === 'life' || !t.personalType) && isOverdue(t)).length;
+                const lifeWeek = tasks.filter(t => t.category === 'personal' && (t.personalType === 'life' || !t.personalType) && isWk(t)).length;
+
+                filteredTasks = filteredTasks.filter(t => t.personalType === personalSub || (!t.personalType && personalSub === 'life'));
+
+                const styleLearn = personalSub === 'learning' ? 'bg-learning-500 text-white shadow-lg scale-105 border-learning-500 ring-2 ring-blue-200' : 'bg-white text-gray-500 hover:bg-gray-50 border-gray-200';
+                const styleLife = personalSub === 'life' ? 'bg-life-500 text-white shadow-lg scale-105 border-life-500 ring-2 ring-pink-200' : 'bg-white text-gray-500 hover:bg-gray-50 border-gray-200';
+
+                subNav = `
+                <div class="flex justify-center gap-4 mb-8">
+                    <button onclick="switchPersonalSub('learning')" class="relative px-6 py-2.5 rounded-full font-bold text-sm transition-all border flex items-center gap-2 ${styleLearn}">
+                        <span>${txt.type_learning}</span>
+                        ${learnLate > 0 ? `<div class="absolute -top-2 -right-1 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm border-2 border-white animate-pulse">${learnLate}</div>` : ''}
+                        ${learnWeek > 0 ? `<div class="absolute -top-2 -left-1 bg-blue-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm border-2 border-white">${learnWeek}</div>` : ''}
+                    </button>
+                    <button onclick="switchPersonalSub('life')" class="relative px-6 py-2.5 rounded-full font-bold text-sm transition-all border flex items-center gap-2 ${styleLife}">
+                        <span>${txt.type_life}</span>
+                        ${lifeLate > 0 ? `<div class="absolute -top-2 -right-1 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm border-2 border-white animate-pulse">${lifeLate}</div>` : ''}
+                        ${lifeWeek > 0 ? `<div class="absolute -top-2 -left-1 bg-blue-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm border-2 border-white">${lifeWeek}</div>` : ''}
+                    </button>
+                </div>`;
             }
+
             const total = filteredTasks.length;
             const done = filteredTasks.filter(t => t.status === 'done').length;
             const late = filteredTasks.filter(t => isOverdue(t)).length; 
@@ -415,7 +536,7 @@
             else if (category === 'home') theme = {btn: 'bg-home-600 hover:bg-home-900', txt: 'text-home-600', border: 'border-home-200'};
             else theme = {btn: 'bg-personal-600 hover:bg-personal-900', txt: 'text-personal-600', border: 'border-personal-200'};
             
-            container.innerHTML = `<div class="animate-fade">${subNav}<div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4"><div class="flex gap-4 w-full md:w-auto overflow-x-auto pb-2 no-scrollbar"><div class="bg-white px-6 py-4 rounded-2xl shadow-sm border border-gray-200 text-center flex-shrink-0 min-w-[100px]"><span class="block text-2xl font-bold text-gray-800">${total}</span><span class="text-xs text-gray-500 font-bold">${txt.total}</span></div><div class="bg-white px-6 py-4 rounded-2xl shadow-sm border ${theme.border} text-center flex-shrink-0 min-w-[100px]"><span class="block text-2xl font-bold text-green-600">${done}</span><span class="text-xs text-gray-500 font-bold">${txt.done}</span></div><div class="bg-white px-6 py-4 rounded-2xl shadow-sm border border-red-200 text-center flex-shrink-0 relative overflow-hidden min-w-[100px]">${late > 0 ? '<div class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-ping"></div>' : ''}<span class="block text-2xl font-bold text-red-600">${late}</span><span class="text-xs text-gray-500 font-bold">${txt.overdue}</span></div></div><button onclick="openModal('${category}')" class="${theme.btn} text-white py-4 px-8 rounded-2xl shadow-lg shadow-indigo-500/20 font-bold flex items-center justify-center gap-3 transition transform active:scale-95 w-full md:w-auto hover:-translate-y-1"><i class="fa-solid fa-plus text-lg"></i><span>${txt.btn_new}</span></button></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-6">${renderColumn(txt.col_today, filteredTasks, 'today', theme.txt, txt)}${renderColumn(txt.col_week, filteredTasks, 'week', theme.txt, txt)}${renderColumn(txt.col_later, filteredTasks, 'later', theme.txt, txt)}</div></div>`;
+            container.innerHTML = `<div class="animate-fade">${subNav}<div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4"><div class="flex gap-4 w-full md:w-auto overflow-x-auto pb-2 no-scrollbar"><div class="bg-white px-6 py-4 rounded-2xl shadow-sm border border-gray-200 text-center flex-shrink-0 min-w-[100px]"><span class="block text-2xl font-bold text-gray-800">${total}</span><span class="text-xs text-gray-500 font-bold">${txt.total}</span></div><div class="bg-white px-6 py-4 rounded-2xl shadow-sm border ${theme.border} text-center flex-shrink-0 min-w-[100px]"><span class="block text-2xl font-bold text-green-600">${done}</span><span class="text-xs text-gray-500 font-bold">${txt.done}</span></div><div class="bg-white px-6 py-4 rounded-2xl shadow-sm border border-red-200 text-center flex-shrink-0 relative overflow-hidden min-w-[100px]">${late > 0 ? '<div class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-ping"></div>' : ''}<span class="block text-2xl font-bold text-red-600">${late}</span><span class="text-xs text-gray-500 font-bold">${txt.overdue}</span></div></div><button onclick="openModal('${category}')" type="button" class="${theme.btn} text-white py-4 px-8 rounded-2xl shadow-lg shadow-indigo-500/20 font-bold flex items-center justify-center gap-3 transition transform active:scale-95 w-full md:w-auto hover:-translate-y-1"><i class="fa-solid fa-plus text-lg"></i><span>${txt.btn_new}</span></button></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-6">${renderColumn(txt.col_today, filteredTasks, 'today', theme.txt, txt)}${renderColumn(txt.col_week, filteredTasks, 'week', theme.txt, txt)}${renderColumn(txt.col_later, filteredTasks, 'later', theme.txt, txt)}</div></div>`;
         }
 
         function renderColumn(title, list, filter, colorClass, txt) {
@@ -437,9 +558,20 @@
             let borderColor = 'border-l-gray-500';
             if(t.category === 'work') borderColor = 'border-l-work-500';
             else if(t.category === 'home') borderColor = 'border-l-home-500';
-            else if(t.category === 'personal') borderColor = 'border-l-personal-500';
+            else if(t.category === 'personal') {
+                if (t.personalType === 'learning') borderColor = 'border-l-learning-500'; 
+                else borderColor = 'border-l-life-500'; 
+            }
 
-            return `<div class="bg-white p-4 rounded-xl shadow-sm hover:shadow-md border-l-4 ${borderColor} active:scale-[0.99] transition-all group"><div class="flex justify-between items-start mb-2 gap-2"><h4 class="font-bold text-gray-800 text-base leading-snug flex-1">${t.title}</h4><div class="flex gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"><button onclick="openRescheduleModal(${t.id}, 'single')" class="text-blue-500 bg-blue-50 hover:bg-blue-100 w-8 h-8 flex items-center justify-center rounded-lg transition"><i class="fa-solid fa-calendar-days"></i></button><button onclick="completeTask(${t.id})" class="text-green-600 bg-green-50 hover:bg-green-100 w-8 h-8 flex items-center justify-center rounded-lg transition"><i class="fa-solid fa-check"></i></button><button onclick="deleteTask(${t.id})" class="text-red-400 bg-red-50 hover:bg-red-100 w-8 h-8 flex items-center justify-center rounded-lg transition"><i class="fa-solid fa-trash"></i></button></div></div><div class="flex items-center justify-between text-xs text-gray-400 mt-3 pt-3 border-t border-gray-50"><span class="flex items-center gap-1"><i class="fa-regular fa-calendar"></i> ${t.date}</span>${isLate ? `<span class="text-red-600 font-bold bg-red-50 px-2 py-1 rounded-md text-[10px] flex items-center gap-1"><i class="fa-solid fa-circle-exclamation"></i> ${txt.overdue}</span>` : ''}</div></div>`;
+            let timeDisplay = '';
+            if (t.timeFrom) {
+                // Flatpickr saves formatted string ("10:00 PM"), so we display it directly
+                const start = t.timeFrom;
+                const end = t.timeTo ? ` - ${t.timeTo}` : '';
+                timeDisplay = `<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold border border-gray-200 ml-2"><i class="fa-regular fa-clock text-[9px] mr-1"></i>${start}${end}</span>`;
+            }
+
+            return `<div class="bg-white p-4 rounded-xl shadow-sm hover:shadow-md border-l-4 ${borderColor} active:scale-[0.99] transition-all group"><div class="flex justify-between items-start mb-2 gap-2"><h4 class="font-bold text-gray-800 text-base leading-snug flex-1">${t.title}</h4><div class="flex gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"><button onclick="openRescheduleModal(${t.id}, 'single')" class="text-blue-500 bg-blue-50 hover:bg-blue-100 w-8 h-8 flex items-center justify-center rounded-lg transition"><i class="fa-solid fa-calendar-days"></i></button><button onclick="completeTask(${t.id})" class="text-green-600 bg-green-50 hover:bg-green-100 w-8 h-8 flex items-center justify-center rounded-lg transition"><i class="fa-solid fa-check"></i></button><button onclick="deleteTask(${t.id})" class="text-red-400 bg-red-50 hover:bg-red-100 w-8 h-8 flex items-center justify-center rounded-lg transition"><i class="fa-solid fa-trash"></i></button></div></div><div class="flex items-center justify-between text-xs text-gray-400 mt-3 pt-3 border-t border-gray-50"><div class="flex items-center gap-1 flex-wrap"><span class="flex items-center gap-1"><i class="fa-regular fa-calendar"></i> ${t.date}</span>${timeDisplay}</div>${isLate ? `<span class="text-red-600 font-bold bg-red-50 px-2 py-1 rounded-md text-[10px] flex items-center gap-1"><i class="fa-solid fa-circle-exclamation"></i> ${txt.overdue}</span>` : ''}</div></div>`;
         }
 
         function initCharts(txt) {
@@ -465,7 +597,33 @@
         function isOverdue(task) { if(task.status === 'done') return false; return new Date(task.date) < new Date().setHours(0,0,0,0); }
         function countOverdue(cat) { return tasks.filter(t => t.category === cat && isOverdue(t)).length; }
         
-        function saveTask() { const title = document.getElementById('taskTitle').value; const category = document.getElementById('taskCategory').value; const date = document.getElementById('taskDate').value; if(!title) return; const loc = (category === 'work') ? workLocation : null; tasks.push({ id: Date.now(), title, category, date, status: 'open', workLocation: loc, createdAt: new Date().toISOString() }); saveToLocal(); closeModal(); renderContent(); }
+        function saveTask() { 
+            const title = document.getElementById('taskTitle').value; 
+            const category = document.getElementById('taskCategory').value; 
+            const date = document.getElementById('taskDate').value; 
+            const timeFrom = document.getElementById('taskTimeFrom').value; // Get Time From (Formatted)
+            const timeTo = document.getElementById('taskTimeTo').value;     // Get Time To (Formatted)
+
+            if(!title) return; 
+            
+            const loc = (category === 'work') ? workLocation : null; 
+            const pType = (category === 'personal') ? personalSub : null; 
+
+            tasks.push({ 
+                id: Date.now(), 
+                title, 
+                category, 
+                date, 
+                timeFrom: timeFrom || null, // Store time string
+                timeTo: timeTo || null,     // Store time string
+                status: 'open', 
+                workLocation: loc, 
+                personalType: pType, 
+                createdAt: new Date().toISOString() 
+            }); 
+            saveToLocal(); closeModal(); renderContent(); 
+        }
+
         function completeTask(id) { tasks = tasks.map(t => t.id === id ? {...t, status: 'done'} : t); addXP(10); confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); saveToLocal(); renderContent(); }
         function deleteTask(id) { if(confirm(txt.confirm_del)) { tasks = tasks.filter(t => t.id !== id); saveToLocal(); renderContent(); } }
         function addXP(amount) { userStats.xp += amount; if(userStats.xp >= userStats.nextLevelXp) { userStats.level++; userStats.xp = 0; userStats.nextLevelXp = Math.floor(userStats.nextLevelXp * 1.5); alert(txt.level_up); } saveStats(); }
@@ -691,25 +849,121 @@
             }
         }
         function openBatchRescheduleModal() { document.getElementById('warningModal').classList.add('hidden'); openRescheduleModal(null, 'batch'); }
-        function openRescheduleModal(id, mode) { taskToRescheduleId = id; rescheduleMode = mode; document.getElementById('rescheduleModal').classList.remove('hidden'); document.getElementById('newRescheduleDate').valueAsDate = new Date(); }
+        
+        function openRescheduleModal(id, mode) { 
+            taskToRescheduleId = id; 
+            rescheduleMode = mode; 
+            document.getElementById('rescheduleModal').classList.remove('hidden'); 
+            
+            // Set default date to today
+            rescheduleDatePicker.setDate(new Date()); 
+            
+            // Clear or Set Time Pickers
+            rescheduleTimePickerFrom.clear();
+            rescheduleTimePickerTo.clear();
+
+            // If editing a single task, try to pre-fill existing time
+            if(mode === 'single' && id) {
+                const task = tasks.find(t => t.id === id);
+                if(task) {
+                   if(task.timeFrom) rescheduleTimePickerFrom.setDate(task.timeFrom);
+                   if(task.timeTo) rescheduleTimePickerTo.setDate(task.timeTo);
+                }
+            }
+        }
+        
         function closeRescheduleModal() { document.getElementById('rescheduleModal').classList.add('hidden'); taskToRescheduleId = null; if (rescheduleMode === 'batch' || rescheduleMode === 'single') checkOverduePopup(); }
-        function confirmReschedule() { const newDate = document.getElementById('newRescheduleDate').value; if(!newDate) return; if (rescheduleMode === 'batch') { tasks = tasks.map(t => isOverdue(t) ? {...t, date: newDate} : t); alert(txt.reschedule_done); } else if (taskToRescheduleId) { tasks = tasks.map(t => t.id === taskToRescheduleId ? {...t, date: newDate} : t); } saveToLocal(); closeRescheduleModal(); renderContent(); checkOverduePopup(); }
-        function closeModal() { document.getElementById('taskModal').classList.add('hidden'); document.getElementById('taskTitle').value = ''; }
+        
+        function confirmReschedule() { 
+            const newDate = document.getElementById('newRescheduleDate').value; 
+            const newTimeFrom = document.getElementById('rescheduleTimeFrom').value;
+            const newTimeTo = document.getElementById('rescheduleTimeTo').value;
+
+            if(!newDate) return; 
+            
+            if (rescheduleMode === 'batch') { 
+                // Batch reschedule: Apply date to all. Apply time ONLY if user selected one.
+                tasks = tasks.map(t => {
+                    if(isOverdue(t)) {
+                        return {
+                            ...t, 
+                            date: newDate,
+                            // If user picked a time in batch mode, apply it. Otherwise keep old time or null? 
+                            // Usually batch reschedule is just for date, but let's allow overwriting time if specified.
+                            timeFrom: newTimeFrom || t.timeFrom,
+                            timeTo: newTimeTo || t.timeTo
+                        };
+                    }
+                    return t;
+                }); 
+                alert(txt.reschedule_done); 
+            } else if (taskToRescheduleId) { 
+                tasks = tasks.map(t => t.id === taskToRescheduleId ? {
+                    ...t, 
+                    date: newDate,
+                    timeFrom: newTimeFrom || null, // If cleared, save as null
+                    timeTo: newTimeTo || null
+                } : t); 
+            } 
+            
+            saveToLocal(); 
+            closeRescheduleModal(); 
+            renderContent(); 
+            checkOverduePopup(); 
+        }
+        
+        function closeModal() { 
+            document.getElementById('taskModal').classList.add('hidden'); 
+            document.getElementById('taskTitle').value = ''; 
+            // Clear Pickers
+            if(datePicker) datePicker.clear();
+            if(timePickerFrom) timePickerFrom.clear();
+            if(timePickerTo) timePickerTo.clear();
+        }
+        
+        function clearTime(id, e) {
+            e.stopPropagation();
+            if(id === 'taskTimeTo' && timePickerTo) timePickerTo.clear();
+            if(id === 'rescheduleTimeTo' && rescheduleTimePickerTo) rescheduleTimePickerTo.clear();
+        }
+        
         function openModal(category) { 
             document.getElementById('taskModal').classList.remove('hidden'); 
-            document.getElementById('taskDate').valueAsDate = new Date(); 
+            if(datePicker) datePicker.setDate(new Date()); 
             document.getElementById('taskCategory').value = category; 
-            const badge = document.getElementById('workLocationBadge'); 
-            const badgeText = document.getElementById('locBadgeText'); 
+            
+            const badge = document.getElementById('subCategoryBadge'); 
+            const badgeText = document.getElementById('badgeText'); 
+            
             if (category === 'work') { 
                 badge.classList.remove('hidden'); 
-                if (workLocation === 'egypt') { badgeText.innerText = txt.loc_egypt; badge.className = "mb-4 p-3 bg-red-50 rounded-lg text-center border border-red-100 text-red-700"; } 
-                else { badgeText.innerText = txt.loc_ksa; badge.className = "mb-4 p-3 bg-green-50 rounded-lg text-center border border-green-100 text-green-700"; } 
-            } else { badge.classList.add('hidden'); } 
+                if (workLocation === 'egypt') { 
+                    badgeText.innerText = txt.loc_egypt; 
+                    badge.className = "mb-4 p-3 bg-red-50 rounded-lg text-center border border-red-100 text-red-700"; 
+                } else { 
+                    badgeText.innerText = txt.loc_ksa; 
+                    badge.className = "mb-4 p-3 bg-green-50 rounded-lg text-center border border-green-100 text-green-700"; 
+                } 
+            } else if (category === 'personal') {
+                badge.classList.remove('hidden');
+                if (personalSub === 'learning') {
+                    badgeText.innerText = txt.type_learning;
+                    badge.className = "mb-4 p-3 bg-blue-50 rounded-lg text-center border border-blue-100 text-blue-700";
+                } else {
+                    badgeText.innerText = txt.type_life;
+                    badge.className = "mb-4 p-3 bg-pink-50 rounded-lg text-center border border-pink-100 text-pink-700";
+                }
+            } else { 
+                badge.classList.add('hidden'); 
+            } 
+            
             const header = document.getElementById('modalHeader'); 
             const btn = document.getElementById('saveBtn'); 
             let color = 'bg-gray-600';
-            if (category === 'work') color = 'bg-work-600'; else if (category === 'home') color = 'bg-home-600'; else if (category === 'personal') color = 'bg-personal-600';
+            if (category === 'work') color = 'bg-work-600'; 
+            else if (category === 'home') color = 'bg-home-600'; 
+            else if (category === 'personal') color = 'bg-personal-600';
+            
             header.className = `p-4 md:p-5 flex justify-between items-center text-white ${color}`; 
             btn.className = `px-6 py-2 text-white rounded-lg hover:opacity-90 font-bold transition ${color}`; 
         }
