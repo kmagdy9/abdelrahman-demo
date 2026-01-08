@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Abdelrahman's Life OS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        work: { 500: '#4f46e5', 600: '#4338ca', 200: '#c7d2fe', 100: '#e0e7ff', 50: '#eef2ff', 900: '#312e81' },
+                        home: { 500: '#10b981', 600: '#059669', 200: '#a7f3d0', 100: '#d1fae5', 50: '#ecfdf5', 900: '#064e3b' },
+                        personal: { 500: '#a855f7', 600: '#9333ea', 200: '#e9d5ff', 100: '#f3e8ff', 50: '#faf5ff', 900: '#581c87' },
+                        brand: { 900: '#111827' },
+                        ksa: { 500: '#15803d', 50: '#f0fdf4', 100: '#dcfce7' },
+                        eg: { 500: '#ce1126', 50: '#fef2f2', 100: '#fee2e2' }
+                    },
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #f0f2f5; -webkit-tap-highlight-color: transparent; font-family: 'Poppins', sans-serif; }
+        .nav-btn { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .nav-btn:active { transform: scale(0.95); }
+        .animate-fade { animation: fadeIn 0.4s ease-out; }
+        .animate-slide-up { animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .timeline-line::before {
+            content: ''; position: absolute; top: 2rem; bottom: -2rem; left: 1rem; width: 2px; background: #e5e7eb; z-index: 0;
+        }
+        .timeline-item:last-child .timeline-line::before { display: none; }
+
+        .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        @keyframes ring-swing {
+            0% { transform: rotate(0deg); } 20% { transform: rotate(15deg); } 40% { transform: rotate(-10deg); }
+            60% { transform: rotate(5deg); } 80% { transform: rotate(-5deg); } 100% { transform: rotate(0deg); }
+        }
+        .bell-ringing { animation: ring-swing 1.5s infinite ease-in-out; transform-origin: top center; color: #dc2626 !important; }
+        .slide-in-down { animation: slideInDown 0.5s ease-out forwards; }
+        @keyframes slideInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="text-gray-800 h-screen overflow-hidden flex flex-col bg-gray-50">
+
+    <nav id="desktop-nav" class="bg-white/80 backdrop-blur-xl border-b border-gray-100 z-20 hidden md:flex items-center justify-between px-6 py-4 shrink-0 sticky top-0 relative">
+        <button onclick="switchView('landing')" class="flex items-center gap-3 group focus:outline-none min-w-fit transition-transform active:scale-95 z-30">
+            <div class="w-11 h-11 bg-gradient-to-br from-brand-900 to-gray-800 rounded-xl flex items-center justify-center text-white shadow-lg shadow-gray-200 group-hover:shadow-xl group-hover:scale-105 transition-all duration-300 relative overflow-hidden">
+                <div class="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <i class="fa-solid fa-infinity text-xl group-hover:rotate-180 transition-transform duration-700 ease-in-out"></i>
+            </div>
+            <div class="text-left flex flex-col justify-center h-full">
+                <h1 class="font-black text-xl tracking-tight leading-none text-gray-900 group-hover:text-work-600 transition-colors">
+                    <span data-key="brand_name">Abdelrahman's</span>
+                </h1>
+                <span class="text-[10px] font-bold tracking-[0.2em] text-gray-400 uppercase" data-key="brand_sub">Life OS</span>
+            </div>
+        </button>
+
+        <div class="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-center gap-3 z-20">
+            <button onclick="switchView('landing')" id="nav-landing" class="nav-btn px-5 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all border border-transparent">
+                <i class="fa-solid fa-chart-pie text-sm"></i><span data-key="nav_dashboard">Dashboard</span>
+            </button>
+            <button onclick="switchView('work')" id="nav-work" class="nav-btn px-5 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all border border-transparent">
+                <i class="fa-solid fa-briefcase text-sm"></i><span data-key="nav_work">Work</span>
+            </button>
+            <button onclick="switchView('home')" id="nav-home" class="nav-btn px-5 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all border border-transparent">
+                <i class="fa-solid fa-house text-sm"></i><span data-key="nav_home">Home</span>
+            </button>
+            <button onclick="switchView('personal')" id="nav-personal" class="nav-btn px-5 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all border border-transparent">
+                <i class="fa-solid fa-user text-sm"></i><span data-key="nav_personal">Personal</span>
+            </button>
+            <button onclick="switchView('history')" id="nav-history" class="nav-btn px-5 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all border border-transparent">
+                <i class="fa-solid fa-clock-rotate-left text-sm"></i><span data-key="nav_history">History</span>
+            </button>
+        </div>
+
+        <div class="flex items-center gap-3 min-w-fit justify-end z-30">
+            <button onclick="checkOverduePopup()" class="bg-white text-gray-400 hover:text-gray-600 w-9 h-9 rounded-full text-sm font-bold border border-gray-200 shadow-sm transition flex items-center justify-center group relative overflow-visible">
+                <i class="fa-solid fa-bell bell-icon"></i>
+                <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white hidden" id="notif-dot-desktop"></span>
+            </button>
+            <button onclick="switchView('settings')" id="nav-settings" class="w-9 h-9 rounded-full bg-gray-800 hover:bg-gray-700 text-white shadow-md shadow-gray-300 flex items-center justify-center transition hover:rotate-90">
+                <i class="fa-solid fa-gear text-xs"></i>
+            </button>
+        </div>
+    </nav>
+
+    <main class="flex-1 h-full overflow-y-auto relative bg-gray-50/30 pb-20 md:pb-0 scroll-smooth">
+        <header class="bg-white/80 p-4 md:hidden border-b sticky top-0 z-10 flex justify-between items-center shadow-sm backdrop-blur-md">
+            <div>
+                <h2 id="page-title" class="text-xl font-bold text-gray-800">Dashboard</h2>
+                <p id="current-date" class="text-xs text-gray-500 font-medium mt-1"></p>
+            </div>
+            <div class="flex gap-2">
+                 <button onclick="checkOverduePopup()" class="bg-white text-gray-400 hover:text-gray-600 px-3 py-1 rounded-full text-xs font-bold border border-gray-200 overflow-visible">
+                    <i class="fa-solid fa-bell bell-icon"></i>
+                 </button>
+            </div>
+        </header>
+
+        <div id="content-area" class="p-4 md:p-8 max-w-5xl mx-auto h-full"></div>
+    </main>
+
+    <nav class="md:hidden fixed bottom-0 left-0 w-full bg-white/90 backdrop-blur-lg border-t border-gray-200 flex justify-around items-center p-2 z-30 shadow-[0_-5px_15px_rgba(0,0,0,0.05)] safe-pb">
+        <button onclick="switchView('work')" id="mob-work" class="flex flex-col items-center gap-1 p-2 text-gray-400"><i class="fa-solid fa-briefcase text-xl"></i><span class="text-[10px] font-bold" data-key="nav_work">Work</span></button>
+        <button onclick="switchView('home')" id="mob-home" class="flex flex-col items-center gap-1 p-2 text-gray-400"><i class="fa-solid fa-house text-xl"></i><span class="text-[10px] font-bold" data-key="nav_home">Home</span></button>
+        <div class="relative -top-5"><button onclick="switchView('landing')" class="w-14 h-14 bg-brand-900 rounded-full text-white shadow-lg flex items-center justify-center text-2xl border-4 border-gray-50"><i class="fa-solid fa-rocket"></i></button></div>
+        <button onclick="switchView('personal')" id="mob-personal" class="flex flex-col items-center gap-1 p-2 text-gray-400"><i class="fa-solid fa-user text-xl"></i><span class="text-[10px] font-bold" data-key="nav_personal">Pers</span></button>
+        <button onclick="switchView('settings')" id="mob-settings" class="flex flex-col items-center gap-1 p-2 text-gray-400"><i class="fa-solid fa-gear text-xl"></i><span class="text-[10px] font-bold" data-key="nav_settings">Set</span></button>
+    </nav>
+
+    <div id="briefingModal" class="fixed top-20 right-4 md:right-8 z-[80] hidden max-w-sm w-full animate-fade">
+        <div class="bg-white border-l-4 border-brand-900 shadow-2xl p-5 rounded-2xl flex gap-4 items-start relative transform transition-all hover:scale-[1.02]">
+            <button onclick="closeBriefing()" class="absolute top-2 right-2 text-gray-300 hover:text-gray-500"><i class="fa-solid fa-xmark"></i></button>
+            <div class="bg-brand-900 text-white w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-xl shadow-lg">👋</div>
+            <div class="flex-1">
+                <h3 id="briefingTitle" class="font-bold text-gray-800 text-base mb-1">Good Morning!</h3>
+                <p id="briefingText" class="text-xs text-gray-500 mb-3">You have tasks today.</p>
+                <div id="briefingList" class="space-y-1 mb-3"></div>
+                <button onclick="switchView('work'); closeBriefing()" class="bg-brand-900 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-gray-800 transition w-full shadow-md">Let's Go 🚀</button>
+            </div>
+        </div>
+    </div>
+    <div id="taskModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center backdrop-blur-sm transition-opacity p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-pop transform scale-100">
+            <div id="modalHeader" class="p-4 md:p-5 flex justify-between items-center text-white bg-gray-800">
+                <h3 class="text-lg md:text-xl font-bold flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i> <span data-key="modal_add_title">New Task</span></h3>
+                <button onclick="closeModal()" class="text-white hover:text-gray-300"><i class="fa-solid fa-xmark fa-lg"></i></button>
+            </div>
+            <form onsubmit="event.preventDefault(); saveTask();" class="p-4 md:p-6">
+                <input type="hidden" id="taskCategory">
+                <div id="workLocationBadge" class="hidden mb-4 p-3 bg-gray-50 rounded-lg text-center border border-gray-200">
+                    <span class="text-xs text-gray-500 font-bold block mb-1">Adding to:</span>
+                    <span id="locBadgeText" class="font-bold text-lg"></span>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold mb-2 text-gray-700" data-key="modal_task_label">Title</label>
+                    <input type="text" id="taskTitle" class="w-full p-3 md:p-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 text-base md:text-lg transition" required>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold mb-2 text-gray-700" data-key="modal_date_label">Date</label>
+                    <input type="date" id="taskDate" class="w-full p-3 border-2 border-gray-200 rounded-xl bg-gray-50 outline-none" required>
+                </div>
+                <div class="flex justify-end gap-3 pt-4 border-t mt-4">
+                    <button type="button" onclick="closeModal()" class="px-5 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-bold text-sm" data-key="btn_cancel">Cancel</button>
+                    <button type="submit" id="saveBtn" class="px-6 py-2 bg-gray-800 text-white rounded-lg hover:opacity-90 shadow-lg font-bold transition transform active:scale-95 text-sm md:text-base" data-key="btn_save">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="rescheduleModal" class="fixed inset-0 bg-black/60 hidden z-[70] flex items-center justify-center backdrop-blur-sm transition-opacity p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-pop transform scale-100">
+            <div class="p-4 bg-blue-600 text-white flex justify-between items-center">
+                <h3 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-calendar-days"></i> <span data-key="modal_reschedule_title">Reschedule</span></h3>
+                <button onclick="closeRescheduleModal()" class="text-white hover:text-gray-200"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6">
+                <label class="block text-sm font-bold mb-2 text-gray-700" data-key="modal_new_date">New Date</label>
+                <input type="date" id="newRescheduleDate" class="w-full p-3 border-2 border-blue-100 focus:border-blue-500 rounded-xl bg-blue-50 outline-none transition mb-6">
+                <div class="flex gap-3">
+                    <button onclick="closeRescheduleModal()" class="flex-1 py-2 text-gray-500 hover:bg-gray-100 rounded-lg font-bold text-sm" data-key="btn_cancel">Cancel</button>
+                    <button onclick="confirmReschedule()" class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold shadow-md transition" data-key="btn_confirm">Update</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="warningModal" class="fixed inset-0 bg-red-900/80 hidden z-[60] flex items-center justify-center backdrop-blur-md p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden animate-shake transform scale-100 border-4 border-red-500">
+            <div class="p-4 bg-red-500 text-white flex justify-between items-center">
+                <h3 class="text-lg font-black flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> <span data-key="alert_title">Alert!</span></h3>
+                <button onclick="document.getElementById('warningModal').classList.add('hidden')" class="text-white/80 hover:text-white"><i class="fa-solid fa-xmark fa-xl"></i></button>
+            </div>
+            <div class="p-6">
+                <p class="text-gray-700 font-bold mb-4" data-key="alert_msg">You have overdue tasks!</p>
+                <div id="overdueList" class="space-y-2 max-h-64 overflow-y-auto pr-2 mb-6"></div>
+                <button onclick="openBatchRescheduleModal()" class="w-full mt-4 bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-3 rounded-xl transition text-sm">
+                    <i class="fa-solid fa-layer-group"></i> <span data-key="btn_reschedule">Reschedule All</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const txt = {
+            brand_name: "Abdelrahman's", brand_sub: "Life OS",
+            nav_dashboard: 'Dashboard', nav_work: 'Work', nav_home: 'Home', nav_personal: 'Personal', nav_history: 'Timeline', nav_settings: 'Settings',
+            page_dashboard: 'Performance Overview', page_work: '💼 Work Mode', page_home: '🏠 Home Mode', page_personal: '👤 Personal Mode', page_history: '📂 Time Travel', page_settings: '⚙️ Settings',
+            card_work_desc: 'Manage tasks & projects', card_home_desc: 'House & family needs', card_personal_desc: 'Self improvement & hobbies',
+            perf_rate: 'Overall Completion Rate', perf_week: 'Tasks Completed (Last 7 Days)',
+            empty_perf: 'Add tasks to start tracking', perf_high: '🔥🔥 World Class Performance!', perf_mid: '👍 Good... Keep going', perf_low: '⚠️ Needs Focus',
+            total: 'Total', done: 'Done', overdue: 'Overdue', btn_new: 'New Task',
+            col_today: 'Today 🔥', col_week: 'This Week 📅', col_later: 'Later 🚀', empty_col: 'Empty!',
+            modal_add_title: 'Add New Task', modal_task_label: 'Task Title', modal_date_label: 'Due Date', btn_save: 'Save Task', btn_cancel: 'Cancel', task_placeholder: 'What needs to be done?',
+            alert_title: 'Important Alert!', alert_msg: 'You have overdue tasks pending action!', btn_reschedule: 'Reschedule All Batch',
+            hist_title: 'Your Timeline', hist_empty: 'No records for this month. A fresh start!', hist_search: 'Search history...', hist_total: 'Completed in',
+            hist_select_month: 'Select Month', hist_all_months: 'All Time',
+            set_title: 'General Settings', set_danger: 'Danger Zone', btn_reset: '🗑️ Reset All Data', confirm_reset: 'Are you sure?', confirm_del: 'Delete Task?',
+            reschedule_done: 'Rescheduled successfully! 💪', level_up: 'Level Up! 🎉',
+            loc_egypt: 'Egypt 🇪🇬', loc_ksa: 'KSA 🇸🇦',
+            modal_reschedule_title: 'Reschedule', modal_new_date: 'Select New Date', btn_confirm: 'Update',
+            brief_morning: 'Good Morning, Abdelrahman! ☀️', brief_evening: 'Good Evening, Abdelrahman! 🌙', brief_msg: 'You have {n} tasks for today.', brief_btn: "Let's Go 🚀",
+            hist_back: 'Back', hist_work_btn: 'Work 💼', hist_home_btn: 'Home 🏠', hist_personal_btn: 'Personal 👤',
+            month_completed: 'Tasks Completed'
+        };
+
+        let tasks = JSON.parse(localStorage.getItem('lifeOS_tasks_v7')) || [];
+        let userStats = JSON.parse(localStorage.getItem('lifeOS_stats_v7')) || { level: 1, xp: 0, nextLevelXp: 100, name: 'Abdelrahman' };
+        let currentView = 'landing';
+        let workLocation = 'egypt'; 
+        let completionChart = null;
+        let weeklyChart = null;
+        let taskToRescheduleId = null; 
+        let rescheduleMode = 'single';
+        
+        let historySubView = 'main'; 
+        const today = new Date();
+        let historyMonthFilter = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+
+        updateDate();
+        renderContent();
+
+        function updateStaticText() {
+            document.querySelectorAll('[data-key]').forEach(el => {
+                const key = el.getAttribute('data-key');
+                if(txt[key]) el.innerText = txt[key];
+            });
+            const tTitle = document.getElementById('taskTitle');
+            if(tTitle) tTitle.placeholder = txt.task_placeholder;
+            
+            const titleEl = document.getElementById('page-title');
+            if(titleEl) {
+                const viewKey = `page_${currentView === 'landing' ? 'dashboard' : currentView}`;
+                if(txt[viewKey]) titleEl.innerText = txt[viewKey];
+            }
+        }
+
+        function updateDate() {
+            document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        setTimeout(() => {
+            checkOverduePopup();
+            checkDailyBriefing(); 
+        }, 1000);
+
+        function switchView(view) {
+            currentView = view;
+            if (view !== 'history') historySubView = 'main';
+            else if (view === 'history' && historySubView !== 'main') historySubView = 'main';
+
+            const themes = {
+                landing: { active: 'bg-gray-100 text-gray-800 ring-2 ring-gray-200 shadow-sm', inactive: 'bg-white text-gray-500 hover:bg-gray-50' },
+                work: { active: 'bg-work-50 text-work-600 ring-2 ring-work-200 shadow-sm', inactive: 'bg-white text-work-600/70 hover:bg-work-50 hover:text-work-600' },
+                home: { active: 'bg-home-50 text-home-600 ring-2 ring-home-200 shadow-sm', inactive: 'bg-white text-home-600/70 hover:bg-home-50 hover:text-home-600' },
+                personal: { active: 'bg-personal-50 text-personal-600 ring-2 ring-personal-200 shadow-sm', inactive: 'bg-white text-personal-600/70 hover:bg-personal-50 hover:text-personal-600' },
+                history: { active: 'bg-blue-50 text-blue-600 ring-2 ring-blue-200 shadow-sm', inactive: 'bg-white text-blue-600/70 hover:bg-blue-50 hover:text-blue-600' }
+            };
+
+            Object.keys(themes).forEach(v => { const btn = document.getElementById(`nav-${v}`); if(btn) btn.className = `nav-btn px-5 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all border border-transparent ${themes[v].inactive}`; });
+            const activeBtn = document.getElementById(`nav-${view}`); if(activeBtn && themes[view]) activeBtn.className = `nav-btn px-5 py-2.5 rounded-2xl text-xs font-bold flex items-center gap-2 transition-all border border-transparent ${themes[view].active}`;
+            document.querySelectorAll('nav:not(#desktop-nav) button').forEach(btn => btn.classList.remove('mobile-nav-active', 'text-brand-900'));
+            if(document.getElementById(`mob-${view}`)) { document.getElementById(`mob-${view}`).classList.add('mobile-nav-active', 'text-brand-900'); document.getElementById(`mob-${view}`).classList.remove('text-gray-400'); }
+            const titleEl = document.getElementById('page-title');
+            const viewKey = `page_${view === 'landing' ? 'dashboard' : view}`;
+            if(titleEl && txt[viewKey]) titleEl.innerText = txt[viewKey];
+            renderContent();
+        }
+
+        function setHistoryView(subView) {
+            historySubView = subView;
+            renderContent();
+        }
+        
+        function setHistoryMonth(month) {
+            historyMonthFilter = month;
+            const searchInput = document.querySelector('#historySearchInput');
+            const searchValue = searchInput ? searchInput.value : '';
+            renderContent(searchValue);
+        }
+
+        function scrollMonths(direction) {
+            const container = document.getElementById('monthScroller');
+            if(container) {
+                const scrollAmount = 300; 
+                if(direction === 'left') {
+                    container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+                } else {
+                    container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+                }
+            }
+        }
+
+        function switchWorkLoc(loc) { workLocation = loc; renderContent(); }
+
+        function renderContent(searchQuery = '') {
+            const container = document.getElementById('content-area');
+            container.innerHTML = '';
+            
+            if(completionChart) { completionChart.destroy(); completionChart = null; }
+            if(weeklyChart) { weeklyChart.destroy(); weeklyChart = null; }
+            if (currentView === 'landing') renderLanding(container, txt);
+            else if (currentView === 'work') renderCategoryDashboard(container, 'work', txt);
+            else if (currentView === 'home') renderCategoryDashboard(container, 'home', txt);
+            else if (currentView === 'personal') renderCategoryDashboard(container, 'personal', txt);
+            else if (currentView === 'history') renderHistoryCreative(container, txt, searchQuery);
+            else if (currentView === 'settings') renderSettings(container, txt);
+        }
+
+        // Helper to count tasks for "This Week" (upcoming 7 days + today)
+        function countWeekly(cat) {
+            const now = new Date(); now.setHours(0,0,0,0);
+            const nextWeek = new Date(now); nextWeek.setDate(now.getDate() + 7);
+            return tasks.filter(t => {
+                if (t.category !== cat || t.status === 'done') return false;
+                const d = new Date(t.date);
+                return d >= now && d <= nextWeek;
+            }).length;
+        }
+
+        function renderLanding(container, txt) {
+            const workOverdue = countOverdue('work');
+            const homeOverdue = countOverdue('home');
+            const personalOverdue = countOverdue('personal');
+            
+            // New: Count Weekly Tasks
+            const workWeek = countWeekly('work');
+            const homeWeek = countWeekly('home');
+            const personalWeek = countWeekly('personal');
+            
+            container.innerHTML = `
+            <div class="animate-fade pb-10">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full mb-8">
+                    <button onclick="switchView('work')" class="glass hover:bg-white border-none rounded-3xl p-6 md:p-8 transition-all shadow-sm hover:shadow-xl text-center active:scale-95 duration-300 group relative">
+                        ${workOverdue > 0 ? `<div class="absolute top-4 left-4 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold animate-bounce shadow-md ring-2 ring-white">${workOverdue}</div>` : ''}
+                        ${workWeek > 0 ? `<div class="absolute top-4 right-4 bg-blue-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-md ring-2 ring-white animate-pulse">${workWeek}</div>` : ''}
+                        
+                        <div class="w-16 h-16 md:w-20 md:h-20 bg-work-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-briefcase text-3xl md:text-4xl text-work-600"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-1">${txt.nav_work}</h3>
+                        <p class="text-xs text-gray-400">${txt.card_work_desc}</p>
+                    </button>
+                    
+                    <button onclick="switchView('home')" class="glass hover:bg-white border-none rounded-3xl p-6 md:p-8 transition-all shadow-sm hover:shadow-xl text-center active:scale-95 duration-300 group relative">
+                        ${homeOverdue > 0 ? `<div class="absolute top-4 left-4 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold animate-bounce shadow-md ring-2 ring-white">${homeOverdue}</div>` : ''}
+                        ${homeWeek > 0 ? `<div class="absolute top-4 right-4 bg-blue-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-md ring-2 ring-white animate-pulse">${homeWeek}</div>` : ''}
+
+                        <div class="w-16 h-16 md:w-20 md:h-20 bg-home-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-house text-3xl md:text-4xl text-home-600"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-1">${txt.nav_home}</h3>
+                        <p class="text-xs text-gray-400">${txt.card_home_desc}</p>
+                    </button>
+                    
+                    <button onclick="switchView('personal')" class="glass hover:bg-white border-none rounded-3xl p-6 md:p-8 transition-all shadow-sm hover:shadow-xl text-center active:scale-95 duration-300 group relative">
+                        ${personalOverdue > 0 ? `<div class="absolute top-4 left-4 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold animate-bounce shadow-md ring-2 ring-white">${personalOverdue}</div>` : ''}
+                        ${personalWeek > 0 ? `<div class="absolute top-4 right-4 bg-blue-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-md ring-2 ring-white animate-pulse">${personalWeek}</div>` : ''}
+
+                        <div class="w-16 h-16 md:w-20 md:h-20 bg-personal-50 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-user text-3xl md:text-4xl text-personal-600"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-1">${txt.nav_personal}</h3>
+                        <p class="text-xs text-gray-400">${txt.card_personal_desc}</p>
+                    </button>
+                </div>
+                <h3 class="font-bold text-lg md:text-2xl text-gray-800 mb-6 flex items-center gap-2"><i class="fa-solid fa-chart-line text-brand-900"></i> ${txt.nav_dashboard}</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h4 class="font-bold text-gray-500 mb-6 text-sm">${txt.perf_rate}</h4>
+                        <div class="relative h-48 md:h-64 w-full flex items-center justify-center"><canvas id="chartCompletion"></canvas></div>
+                        <div id="performance-text" class="text-center mt-6 font-bold text-lg"></div>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                        <h4 class="font-bold text-gray-500 mb-6 text-sm">${txt.perf_week}</h4>
+                        <div class="relative h-48 md:h-64 w-full"><canvas id="chartWeekly"></canvas></div>
+                    </div>
+                </div>
+            </div>`;
+            setTimeout(() => initCharts(txt), 100);
+        }
+
+        function renderCategoryDashboard(container, category, txt) {
+            let filteredTasks = tasks.filter(t => t.category === category);
+            let subNav = '';
+            if (category === 'work') {
+                filteredTasks = filteredTasks.filter(t => t.workLocation === workLocation || (!t.workLocation && workLocation === 'egypt'));
+                const styleEg = workLocation === 'egypt' ? 'bg-eg-500 text-white shadow-lg scale-105 border-eg-500 ring-2 ring-red-200' : 'bg-white text-gray-500 hover:bg-gray-50 border-gray-200';
+                const styleKsa = workLocation === 'ksa' ? 'bg-ksa-500 text-white shadow-lg scale-105 border-ksa-500 ring-2 ring-green-200' : 'bg-white text-gray-500 hover:bg-gray-50 border-gray-200';
+                subNav = `<div class="flex justify-center gap-4 mb-8"><button onclick="switchWorkLoc('egypt')" class="px-6 py-2.5 rounded-full font-bold text-sm transition-all border flex items-center gap-2 ${styleEg}"><span>${txt.loc_egypt}</span></button><button onclick="switchWorkLoc('ksa')" class="px-6 py-2.5 rounded-full font-bold text-sm transition-all border flex items-center gap-2 ${styleKsa}"><span>${txt.loc_ksa}</span></button></div>`;
+            }
+            const total = filteredTasks.length;
+            const done = filteredTasks.filter(t => t.status === 'done').length;
+            const late = filteredTasks.filter(t => isOverdue(t)).length; 
+            
+            let theme;
+            if (category === 'work') theme = {btn: 'bg-work-600 hover:bg-work-900', txt: 'text-work-600', border: 'border-work-200'};
+            else if (category === 'home') theme = {btn: 'bg-home-600 hover:bg-home-900', txt: 'text-home-600', border: 'border-home-200'};
+            else theme = {btn: 'bg-personal-600 hover:bg-personal-900', txt: 'text-personal-600', border: 'border-personal-200'};
+            
+            container.innerHTML = `<div class="animate-fade">${subNav}<div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4"><div class="flex gap-4 w-full md:w-auto overflow-x-auto pb-2 no-scrollbar"><div class="bg-white px-6 py-4 rounded-2xl shadow-sm border border-gray-200 text-center flex-shrink-0 min-w-[100px]"><span class="block text-2xl font-bold text-gray-800">${total}</span><span class="text-xs text-gray-500 font-bold">${txt.total}</span></div><div class="bg-white px-6 py-4 rounded-2xl shadow-sm border ${theme.border} text-center flex-shrink-0 min-w-[100px]"><span class="block text-2xl font-bold text-green-600">${done}</span><span class="text-xs text-gray-500 font-bold">${txt.done}</span></div><div class="bg-white px-6 py-4 rounded-2xl shadow-sm border border-red-200 text-center flex-shrink-0 relative overflow-hidden min-w-[100px]">${late > 0 ? '<div class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-ping"></div>' : ''}<span class="block text-2xl font-bold text-red-600">${late}</span><span class="text-xs text-gray-500 font-bold">${txt.overdue}</span></div></div><button onclick="openModal('${category}')" class="${theme.btn} text-white py-4 px-8 rounded-2xl shadow-lg shadow-indigo-500/20 font-bold flex items-center justify-center gap-3 transition transform active:scale-95 w-full md:w-auto hover:-translate-y-1"><i class="fa-solid fa-plus text-lg"></i><span>${txt.btn_new}</span></button></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-6">${renderColumn(txt.col_today, filteredTasks, 'today', theme.txt, txt)}${renderColumn(txt.col_week, filteredTasks, 'week', theme.txt, txt)}${renderColumn(txt.col_later, filteredTasks, 'later', theme.txt, txt)}</div></div>`;
+        }
+
+        function renderColumn(title, list, filter, colorClass, txt) {
+            const now = new Date(); now.setHours(0,0,0,0);
+            const nextWeek = new Date(now); nextWeek.setDate(now.getDate() + 7);
+            const items = list.filter(t => {
+                if (t.status === 'done') return false;
+                const d = new Date(t.date);
+                if (filter === 'today') return d <= now;
+                if (filter === 'week') return d > now && d <= nextWeek;
+                return d > nextWeek;
+            });
+            items.sort((a,b) => new Date(a.date) - new Date(b.date));
+            return `<div class="bg-white/60 backdrop-blur-md p-4 rounded-3xl min-h-[150px] md:min-h-[400px] border border-gray-200 flex flex-col"><h3 class="font-bold mb-4 ${colorClass} text-lg flex justify-between items-center px-2">${title} <span class="bg-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm text-gray-500 border border-gray-100">${items.length}</span></h3><div class="space-y-3 flex-1">${items.map(t => getTaskCardHTML(t, txt)).join('')}${items.length === 0 ? `<div class="h-full flex flex-col items-center justify-center text-gray-300 gap-2 min-h-[100px]"><i class="fa-solid fa-check-circle text-3xl opacity-20"></i><p class="text-xs font-bold">${txt.empty_col}</p></div>` : ''}</div></div>`;
+        }
+        
+        function getTaskCardHTML(t, txt) {
+            const isLate = isOverdue(t);
+            let borderColor = 'border-l-gray-500';
+            if(t.category === 'work') borderColor = 'border-l-work-500';
+            else if(t.category === 'home') borderColor = 'border-l-home-500';
+            else if(t.category === 'personal') borderColor = 'border-l-personal-500';
+
+            return `<div class="bg-white p-4 rounded-xl shadow-sm hover:shadow-md border-l-4 ${borderColor} active:scale-[0.99] transition-all group"><div class="flex justify-between items-start mb-2 gap-2"><h4 class="font-bold text-gray-800 text-base leading-snug flex-1">${t.title}</h4><div class="flex gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"><button onclick="openRescheduleModal(${t.id}, 'single')" class="text-blue-500 bg-blue-50 hover:bg-blue-100 w-8 h-8 flex items-center justify-center rounded-lg transition"><i class="fa-solid fa-calendar-days"></i></button><button onclick="completeTask(${t.id})" class="text-green-600 bg-green-50 hover:bg-green-100 w-8 h-8 flex items-center justify-center rounded-lg transition"><i class="fa-solid fa-check"></i></button><button onclick="deleteTask(${t.id})" class="text-red-400 bg-red-50 hover:bg-red-100 w-8 h-8 flex items-center justify-center rounded-lg transition"><i class="fa-solid fa-trash"></i></button></div></div><div class="flex items-center justify-between text-xs text-gray-400 mt-3 pt-3 border-t border-gray-50"><span class="flex items-center gap-1"><i class="fa-regular fa-calendar"></i> ${t.date}</span>${isLate ? `<span class="text-red-600 font-bold bg-red-50 px-2 py-1 rounded-md text-[10px] flex items-center gap-1"><i class="fa-solid fa-circle-exclamation"></i> ${txt.overdue}</span>` : ''}</div></div>`;
+        }
+
+        function initCharts(txt) {
+            const doneTotal = tasks.filter(t => t.status === 'done').length;
+            const openTotal = tasks.filter(t => t.status !== 'done').length;
+            const total = doneTotal + openTotal;
+            const percentage = total === 0 ? 0 : Math.round((doneTotal / total) * 100);
+            const textEl = document.getElementById('performance-text');
+            if(textEl) {
+                if(total === 0) textEl.innerHTML = `<span class="text-gray-400 text-sm">${txt.empty_perf}</span>`;
+                else if(percentage >= 80) textEl.innerHTML = `<span class="text-green-600">${txt.perf_high}</span>`;
+                else if(percentage >= 50) textEl.innerHTML = `<span class="text-yellow-600">${txt.perf_mid}</span>`;
+                else textEl.innerHTML = `<span class="text-red-500">${txt.perf_low}</span>`;
+            }
+            const ctx1 = document.getElementById('chartCompletion');
+            if(ctx1) { completionChart = new Chart(ctx1, { type: 'doughnut', data: { labels: ['Done', 'Remaining'], datasets: [{ data: [doneTotal, openTotal], backgroundColor: ['#10b981', '#f3f4f6'], borderWidth: 0, hoverOffset: 4 }] }, options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { display: false } } } }); }
+            const days = []; const counts = []; 
+            for (let i = 6; i >= 0; i--) { const d = new Date(); d.setDate(d.getDate() - i); days.push(d.toLocaleDateString('en-US', {weekday: 'short'})); const dateStr = d.toISOString().split('T')[0]; counts.push(tasks.filter(t => t.status === 'done' && t.date === dateStr).length); }
+            const ctx2 = document.getElementById('chartWeekly');
+            if(ctx2) { weeklyChart = new Chart(ctx2, { type: 'bar', data: { labels: days, datasets: [{ label: 'Done', data: counts, backgroundColor: '#4f46e5', borderRadius: 6, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { family: 'Poppins' } } } }, plugins: { legend: { display: false } } } }); }
+        }
+
+        function isOverdue(task) { if(task.status === 'done') return false; return new Date(task.date) < new Date().setHours(0,0,0,0); }
+        function countOverdue(cat) { return tasks.filter(t => t.category === cat && isOverdue(t)).length; }
+        
+        function saveTask() { const title = document.getElementById('taskTitle').value; const category = document.getElementById('taskCategory').value; const date = document.getElementById('taskDate').value; if(!title) return; const loc = (category === 'work') ? workLocation : null; tasks.push({ id: Date.now(), title, category, date, status: 'open', workLocation: loc, createdAt: new Date().toISOString() }); saveToLocal(); closeModal(); renderContent(); }
+        function completeTask(id) { tasks = tasks.map(t => t.id === id ? {...t, status: 'done'} : t); addXP(10); confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } }); saveToLocal(); renderContent(); }
+        function deleteTask(id) { if(confirm(txt.confirm_del)) { tasks = tasks.filter(t => t.id !== id); saveToLocal(); renderContent(); } }
+        function addXP(amount) { userStats.xp += amount; if(userStats.xp >= userStats.nextLevelXp) { userStats.level++; userStats.xp = 0; userStats.nextLevelXp = Math.floor(userStats.nextLevelXp * 1.5); alert(txt.level_up); } saveStats(); }
+        function saveStats() { localStorage.setItem('lifeOS_stats_v7', JSON.stringify(userStats)); }
+        function saveToLocal() { localStorage.setItem('lifeOS_tasks_v7', JSON.stringify(tasks)); }
+
+        // --- CREATIVE HISTORY LOGIC ---
+        function renderHistoryCreative(c, txt, searchQuery = '') { 
+            if (historySubView === 'main') {
+                c.innerHTML = `
+                    <div class="animate-fade pb-20 pt-6 px-2 flex flex-col items-center justify-center h-full gap-6">
+                        <div class="text-center mb-4">
+                            <h3 class="text-3xl font-black text-gray-800 tracking-tight">${txt.hist_title}</h3>
+                            <p class="text-gray-400 text-sm mt-2">Where time meets achievement.</p>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl">
+                            <button onclick="setHistoryView('work_select')" class="glass hover:bg-white p-8 rounded-[2rem] flex flex-col items-center gap-4 group transition-all duration-300 hover:scale-[1.02] shadow-sm hover:shadow-xl border border-white/40">
+                                <div class="w-20 h-20 bg-gradient-to-br from-work-100 to-white rounded-full flex items-center justify-center group-hover:from-work-600 group-hover:to-work-500 transition-all shadow-inner">
+                                    <i class="fa-solid fa-briefcase text-3xl text-work-600 group-hover:text-white transition-colors"></i>
+                                </div>
+                                <span class="font-bold text-xl text-gray-700 group-hover:text-work-600 transition-colors">${txt.hist_work_btn}</span>
+                            </button>
+                            <button onclick="setHistoryView('home')" class="glass hover:bg-white p-8 rounded-[2rem] flex flex-col items-center gap-4 group transition-all duration-300 hover:scale-[1.02] shadow-sm hover:shadow-xl border border-white/40">
+                                <div class="w-20 h-20 bg-gradient-to-br from-home-100 to-white rounded-full flex items-center justify-center group-hover:from-home-600 group-hover:to-home-500 transition-all shadow-inner">
+                                    <i class="fa-solid fa-house text-3xl text-home-600 group-hover:text-white transition-colors"></i>
+                                </div>
+                                <span class="font-bold text-xl text-gray-700 group-hover:text-home-600 transition-colors">${txt.hist_home_btn}</span>
+                            </button>
+                            <button onclick="setHistoryView('personal')" class="glass hover:bg-white p-8 rounded-[2rem] flex flex-col items-center gap-4 group transition-all duration-300 hover:scale-[1.02] shadow-sm hover:shadow-xl border border-white/40">
+                                <div class="w-20 h-20 bg-gradient-to-br from-personal-100 to-white rounded-full flex items-center justify-center group-hover:from-personal-600 group-hover:to-personal-500 transition-all shadow-inner">
+                                    <i class="fa-solid fa-user text-3xl text-personal-600 group-hover:text-white transition-colors"></i>
+                                </div>
+                                <span class="font-bold text-xl text-gray-700 group-hover:text-personal-600 transition-colors">${txt.hist_personal_btn}</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            else if (historySubView === 'work_select') {
+                c.innerHTML = `
+                    <div class="animate-fade pb-20 pt-10 px-2 flex flex-col items-center justify-center h-full gap-8">
+                        <button onclick="setHistoryView('main')" class="bg-white/50 px-4 py-2 rounded-full text-gray-500 hover:text-gray-800 font-bold flex items-center gap-2 transition hover:bg-white"><i class="fa-solid fa-arrow-left"></i> ${txt.hist_back}</button>
+                        <div class="text-center">
+                            <h3 class="text-2xl font-bold text-work-600">${txt.hist_work_btn}</h3>
+                            <p class="text-gray-400 text-sm">Select location</p>
+                        </div>
+                        <div class="flex flex-col md:flex-row gap-6 w-full max-w-lg justify-center">
+                            <button onclick="setHistoryView('work_eg')" class="glass p-8 rounded-3xl flex flex-col items-center gap-4 hover:scale-105 transition hover:shadow-xl flex-1">
+                                <span class="text-6xl drop-shadow-md">🇪🇬</span>
+                                <span class="font-bold text-xl text-gray-700">${txt.loc_egypt}</span>
+                            </button>
+                            <button onclick="setHistoryView('work_ksa')" class="glass p-8 rounded-3xl flex flex-col items-center gap-4 hover:scale-105 transition hover:shadow-xl flex-1">
+                                <span class="text-6xl drop-shadow-md">🇸🇦</span>
+                                <span class="font-bold text-xl text-gray-700">${txt.loc_ksa}</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            else {
+                let baseList = []; 
+                let title = '';
+                let backView = 'main';
+                let themeColor = 'text-gray-600';
+
+                if (historySubView === 'home') {
+                    baseList = tasks.filter(t => t.status === 'done' && t.category === 'home');
+                    title = txt.hist_home_btn;
+                    backView = 'main';
+                    themeColor = 'text-home-600';
+                } else if (historySubView === 'personal') {
+                    baseList = tasks.filter(t => t.status === 'done' && t.category === 'personal');
+                    title = txt.hist_personal_btn;
+                    backView = 'main';
+                    themeColor = 'text-personal-600';
+                } else if (historySubView === 'work_eg') {
+                    baseList = tasks.filter(t => t.status === 'done' && t.category === 'work' && t.workLocation === 'egypt');
+                    title = txt.loc_egypt;
+                    backView = 'work_select';
+                    themeColor = 'text-work-600';
+                } else if (historySubView === 'work_ksa') {
+                    baseList = tasks.filter(t => t.status === 'done' && t.category === 'work' && t.workLocation === 'ksa');
+                    title = txt.loc_ksa;
+                    backView = 'work_select';
+                    themeColor = 'text-work-600';
+                }
+
+                const now = new Date();
+                const currentYear = now.getFullYear();
+                const generatedMonths = [];
+                for (let m = 1; m <= 12; m++) {
+                    const monthStr = String(m).padStart(2, '0');
+                    generatedMonths.push(`${currentYear}-${monthStr}`);
+                }
+               
+                let displayList = [...baseList];
+                if (historyMonthFilter !== 'all') {
+                    displayList = displayList.filter(t => t.date && t.date.startsWith(historyMonthFilter));
+                }
+                if (searchQuery.trim() !== '') {
+                    displayList = displayList.filter(t => t.title.toLowerCase().includes(searchQuery.toLowerCase()));
+                }
+                displayList.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+                const formatMonthShort = (mStr) => {
+                     const [y, m] = mStr.split('-');
+                     const d = new Date(y, m - 1);
+                     return d.toLocaleDateString('en-US', {month:'short'});
+                };
+                const formatYear = (mStr) => mStr.split('-')[0];
+
+                c.innerHTML = `
+                    <div class="animate-fade pb-24">
+                        <div class="flex justify-between items-center mb-6">
+                            <button onclick="setHistoryView('${backView}')" class="bg-white/60 px-4 py-2 rounded-full text-gray-500 hover:text-gray-800 font-bold flex items-center gap-2 transition hover:bg-white shadow-sm"><i class="fa-solid fa-arrow-left"></i> ${txt.hist_back}</button>
+                            <h3 class="font-black text-2xl ${themeColor}">${title}</h3>
+                        </div>
+
+                         <div class="glass p-6 rounded-3xl mb-8 flex items-center justify-between relative overflow-hidden animate-slide-up">
+                            <div class="absolute -right-10 -top-10 w-32 h-32 bg-gray-100 rounded-full opacity-20"></div>
+                            <div>
+                                <p class="text-sm text-gray-500 font-bold mb-1">${txt.hist_total} ${historyMonthFilter === 'all' ? 'All Time' : historyMonthFilter}</p>
+                                <h2 class="text-4xl font-black text-gray-800">${displayList.length} <span class="text-base font-medium text-gray-400">${txt.month_completed}</span></h2>
+                            </div>
+                            <div class="w-12 h-12 rounded-full bg-white flex items-center justify-center text-xl shadow-sm">🏆</div>
+                        </div>
+
+                        <div class="relative group mb-8">
+                             <button onclick="scrollMonths('left')" class="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 shadow-md w-10 h-10 rounded-full hidden md:flex items-center justify-center text-gray-600 hover:text-brand-900 transition hover:scale-110 -ml-4 border border-gray-100"><i class="fa-solid fa-chevron-left"></i></button>
+                             
+                             <div id="monthScroller" class="flex gap-3 overflow-x-auto pb-4 no-scrollbar snap-x px-2 scroll-smooth">
+                                <button onclick="setHistoryMonth('all')" class="snap-center flex-shrink-0 px-6 py-3 rounded-2xl font-bold transition-all border-2 ${historyMonthFilter === 'all' ? 'bg-gray-800 text-white border-gray-800 scale-105 shadow-lg' : 'bg-white text-gray-400 border-transparent hover:bg-gray-100'}">
+                                    ${txt.hist_all_months}
+                                </button>
+                                ${generatedMonths.map(m => `
+                                    <button onclick="setHistoryMonth('${m}')" class="snap-center flex-shrink-0 flex flex-col items-center justify-center w-20 h-20 rounded-2xl transition-all border-2 ${historyMonthFilter === m ? 'bg-white border-brand-900 text-brand-900 scale-105 shadow-lg' : 'bg-white/50 border-transparent text-gray-400 hover:bg-white'}">
+                                        <span class="text-xs font-bold opacity-60">${formatYear(m)}</span>
+                                        <span class="text-lg font-black">${formatMonthShort(m)}</span>
+                                    </button>
+                                `).join('')}
+                            </div>
+                            
+                            <button onclick="scrollMonths('right')" class="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 shadow-md w-10 h-10 rounded-full hidden md:flex items-center justify-center text-gray-600 hover:text-brand-900 transition hover:scale-110 -mr-4 border border-gray-100"><i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+
+                        <div class="relative w-full mb-8">
+                            <input type="text" id="historySearchInput" onkeyup="renderContent(this.value)" placeholder="${txt.hist_search}" class="w-full pl-12 pr-4 py-4 rounded-2xl border-none bg-white shadow-sm focus:ring-2 focus:ring-brand-900 outline-none transition text-gray-600" value="${searchQuery}">
+                            <i class="fa-solid fa-search absolute left-5 top-5 text-gray-300"></i>
+                        </div>
+
+                        <div class="space-y-0 relative pl-4 md:pl-8">
+                            ${displayList.length === 0 ? `
+                                <div class="flex flex-col items-center justify-center py-12 text-gray-300 gap-4 animate-fade">
+                                    <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center text-4xl mb-2 opacity-50">👻</div>
+                                    <p class="text-base font-bold text-gray-400">${txt.hist_empty}</p>
+                                </div>
+                            ` : displayList.map((t, index) => `
+                                <div class="timeline-item relative pl-8 pb-8 animate-slide-up" style="animation-delay: ${index * 0.05}s">
+                                    <div class="timeline-line absolute left-0 top-0 bottom-0 w-8 flex flex-col items-center">
+                                        <div class="w-3 h-3 bg-gray-300 rounded-full z-10 mt-6 ring-4 ring-gray-50"></div>
+                                    </div>
+                                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between gap-4 hover:shadow-md transition-shadow group">
+                                        <div>
+                                            <h4 class="font-bold text-gray-800 text-lg line-through decoration-gray-300 decoration-2">${t.title}</h4>
+                                            <p class="text-xs text-gray-400 font-bold mt-1 flex items-center gap-2"><i class="fa-regular fa-calendar"></i> ${t.date}</p>
+                                        </div>
+                                        <div class="w-10 h-10 rounded-full bg-green-50 text-green-500 flex items-center justify-center text-lg shadow-sm group-hover:bg-green-500 group-hover:text-white transition-colors">
+                                            <i class="fa-solid fa-check"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function renderSettings(c, txt) { c.innerHTML = `<div class="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100 max-w-2xl mx-auto"><h3 class="font-bold mb-6 text-xl">⚙️ ${txt.set_title}</h3><div class="space-y-4"><div class="p-4 bg-red-50 rounded-xl border border-red-100"><h4 class="font-bold text-red-800 mb-2">${txt.set_danger}</h4><button onclick="if(confirm('${txt.confirm_reset}')){localStorage.clear();location.reload()}" class="w-full text-white bg-red-600 hover:bg-red-700 px-4 py-3 rounded-xl font-bold transition shadow-lg shadow-red-200">${txt.btn_reset}</button></div></div></div>`; }
+
+        function checkDailyBriefing() {
+            const today = new Date().toISOString().split('T')[0];
+            const todaysTasks = tasks.filter(t => t.date === today && t.status !== 'done');
+            if (todaysTasks.length > 0) {
+                const hour = new Date().getHours();
+                const greeting = hour < 12 ? txt.brief_morning : txt.brief_evening;
+                document.getElementById('briefingTitle').innerText = greeting;
+                document.getElementById('briefingText').innerText = txt.brief_msg.replace('{n}', todaysTasks.length);
+                const listHtml = todaysTasks.slice(0, 3).map(task => {
+                    let color = 'bg-gray-500';
+                    if(task.category === 'work') color = 'bg-work-500';
+                    else if(task.category === 'home') color = 'bg-home-500';
+                    else if(task.category === 'personal') color = 'bg-personal-500';
+                    return `<div class="flex items-center gap-2 text-xs text-gray-600"><span class="w-1.5 h-1.5 rounded-full ${color}"></span> <span class="truncate">${task.title}</span></div>`
+                }).join('');
+                document.getElementById('briefingList').innerHTML = listHtml + (todaysTasks.length > 3 ? `<div class="text-[10px] text-gray-400 mt-1">+${todaysTasks.length - 3} more...</div>` : '');
+                const modal = document.getElementById('briefingModal');
+                modal.classList.remove('hidden');
+                modal.classList.add('slide-in-down');
+            }
+        }
+        function closeBriefing() { document.getElementById('briefingModal').classList.add('hidden'); }
+        
+        function checkOverduePopup() {
+            const overdueTasks = tasks.filter(t => isOverdue(t));
+            const notifDot = document.getElementById('notif-dot-desktop');
+            const bellIcons = document.querySelectorAll('.bell-icon');
+            if (overdueTasks.length > 0) {
+                if(notifDot) notifDot.classList.remove('hidden');
+                bellIcons.forEach(icon => icon.classList.add('bell-ringing'));
+                document.getElementById('overdueList').innerHTML = overdueTasks.map(t => {
+                    let icon = '❓';
+                    if(t.category === 'work') icon = '💼';
+                    else if(t.category === 'home') icon = '🏠';
+                    else if(t.category === 'personal') icon = '👤';
+                    return `<div class="flex justify-between items-center bg-gray-50 border border-gray-200 p-3 rounded-lg mb-2 shadow-sm"><div class="flex items-center gap-3"><span class="text-xl">${icon}</span><div><p class="font-bold text-sm text-gray-800">${t.title}</p><p class="text-[10px] text-red-500 font-bold">${t.date}</p></div></div><div class="flex gap-2"><button onclick="openRescheduleModal(${t.id}, 'single')" class="bg-blue-100 text-blue-600 hover:bg-blue-200 w-8 h-8 rounded-lg flex items-center justify-center transition"><i class="fa-solid fa-calendar-days text-sm"></i></button><button onclick="deleteTask(${t.id});checkOverduePopup()" class="bg-red-100 text-red-500 hover:bg-red-200 w-8 h-8 rounded-lg flex items-center justify-center transition"><i class="fa-solid fa-trash text-sm"></i></button></div></div>`
+                }).join('');
+                document.getElementById('warningModal').classList.remove('hidden');
+            } else { 
+                if(notifDot) notifDot.classList.add('hidden');
+                bellIcons.forEach(icon => icon.classList.remove('bell-ringing'));
+                document.getElementById('warningModal').classList.add('hidden'); 
+            }
+        }
+        function openBatchRescheduleModal() { document.getElementById('warningModal').classList.add('hidden'); openRescheduleModal(null, 'batch'); }
+        function openRescheduleModal(id, mode) { taskToRescheduleId = id; rescheduleMode = mode; document.getElementById('rescheduleModal').classList.remove('hidden'); document.getElementById('newRescheduleDate').valueAsDate = new Date(); }
+        function closeRescheduleModal() { document.getElementById('rescheduleModal').classList.add('hidden'); taskToRescheduleId = null; if (rescheduleMode === 'batch' || rescheduleMode === 'single') checkOverduePopup(); }
+        function confirmReschedule() { const newDate = document.getElementById('newRescheduleDate').value; if(!newDate) return; if (rescheduleMode === 'batch') { tasks = tasks.map(t => isOverdue(t) ? {...t, date: newDate} : t); alert(txt.reschedule_done); } else if (taskToRescheduleId) { tasks = tasks.map(t => t.id === taskToRescheduleId ? {...t, date: newDate} : t); } saveToLocal(); closeRescheduleModal(); renderContent(); checkOverduePopup(); }
+        function closeModal() { document.getElementById('taskModal').classList.add('hidden'); document.getElementById('taskTitle').value = ''; }
+        function openModal(category) { 
+            document.getElementById('taskModal').classList.remove('hidden'); 
+            document.getElementById('taskDate').valueAsDate = new Date(); 
+            document.getElementById('taskCategory').value = category; 
+            const badge = document.getElementById('workLocationBadge'); 
+            const badgeText = document.getElementById('locBadgeText'); 
+            if (category === 'work') { 
+                badge.classList.remove('hidden'); 
+                if (workLocation === 'egypt') { badgeText.innerText = txt.loc_egypt; badge.className = "mb-4 p-3 bg-red-50 rounded-lg text-center border border-red-100 text-red-700"; } 
+                else { badgeText.innerText = txt.loc_ksa; badge.className = "mb-4 p-3 bg-green-50 rounded-lg text-center border border-green-100 text-green-700"; } 
+            } else { badge.classList.add('hidden'); } 
+            const header = document.getElementById('modalHeader'); 
+            const btn = document.getElementById('saveBtn'); 
+            let color = 'bg-gray-600';
+            if (category === 'work') color = 'bg-work-600'; else if (category === 'home') color = 'bg-home-600'; else if (category === 'personal') color = 'bg-personal-600';
+            header.className = `p-4 md:p-5 flex justify-between items-center text-white ${color}`; 
+            btn.className = `px-6 py-2 text-white rounded-lg hover:opacity-90 font-bold transition ${color}`; 
+        }
+
+        switchView('landing'); 
+    </script>
+</body>
+</html>
