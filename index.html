@@ -26,8 +26,8 @@
                         brand: { 900: '#111827' },
                         ksa: { 500: '#15803d', 50: '#f0fdf4', 100: '#dcfce7' },
                         eg: { 500: '#ce1126', 50: '#fef2f2', 100: '#fee2e2' },
-                        learning: { 500: '#3b82f6', 600: '#2563eb', 50: '#eff6ff', 100: '#dbeafe' }, // Blue
-                        life: { 500: '#ec4899', 600: '#db2777', 50: '#fdf2f8', 100: '#fce7f3' } // Pink
+                        learning: { 500: '#3b82f6', 600: '#2563eb', 50: '#eff6ff', 100: '#dbeafe' },
+                        life: { 500: '#ec4899', 600: '#db2777', 50: '#fdf2f8', 100: '#fce7f3' }
                     },
                     fontFamily: {
                         sans: ['Poppins', 'sans-serif']
@@ -53,6 +53,24 @@
         }
         .timeline-item:last-child .timeline-line::before { display: none; }
 
+        .notebook-cover {
+            background: linear-gradient(135deg, #ffffff 0%, #f3f4f6 100%);
+            position: relative;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .notebook-cover::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 12px;
+            background: rgba(0,0,0,0.1);
+            border-right: 1px solid rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+        .notebook-spine {
+            position: absolute; left: 12px; top: 0; bottom: 0; width: 2px; background: rgba(0,0,0,0.05);
+        }
+
         .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -65,6 +83,8 @@
         .bell-ringing { animation: ring-swing 1.5s infinite ease-in-out; transform-origin: top center; color: #dc2626 !important; }
         .slide-in-down { animation: slideInDown 0.5s ease-out forwards; }
         @keyframes slideInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .mobile-tab-btn.active-tab span:first-child { font-weight: 800; }
     </style>
 </head>
 <body class="text-gray-800 h-screen overflow-hidden flex flex-col bg-gray-50">
@@ -119,8 +139,12 @@
                 <p id="current-date" class="text-xs text-gray-500 font-medium mt-1"></p>
             </div>
             <div class="flex gap-2">
-                 <button onclick="checkOverduePopup()" class="bg-white text-gray-400 hover:text-gray-600 px-3 py-1 rounded-full text-xs font-bold border border-gray-200 overflow-visible">
+                 <button onclick="checkOverduePopup()" class="bg-white text-gray-400 hover:text-gray-600 px-3 py-1 rounded-full text-xs font-bold border border-gray-200 overflow-visible relative">
                     <i class="fa-solid fa-bell bell-icon"></i>
+                    <span class="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white hidden" id="notif-dot-mobile"></span>
+                 </button>
+                 <button onclick="switchView('settings')" class="bg-white text-gray-400 hover:text-gray-600 px-3 py-1 rounded-full text-xs font-bold border border-gray-200 overflow-visible">
+                    <i class="fa-solid fa-gear"></i>
                  </button>
             </div>
         </header>
@@ -133,22 +157,91 @@
         <button onclick="switchView('home')" id="mob-home" class="flex flex-col items-center gap-1 p-2 text-gray-400"><i class="fa-solid fa-house text-xl"></i><span class="text-[10px] font-bold" data-key="nav_home">Home</span></button>
         <div class="relative -top-5"><button onclick="switchView('landing')" class="w-14 h-14 bg-brand-900 rounded-full text-white shadow-lg flex items-center justify-center text-2xl border-4 border-gray-50"><i class="fa-solid fa-rocket"></i></button></div>
         <button onclick="switchView('personal')" id="mob-personal" class="flex flex-col items-center gap-1 p-2 text-gray-400"><i class="fa-solid fa-user text-xl"></i><span class="text-[10px] font-bold" data-key="nav_personal">Pers</span></button>
-        <button onclick="switchView('settings')" id="mob-settings" class="flex flex-col items-center gap-1 p-2 text-gray-400"><i class="fa-solid fa-gear text-xl"></i><span class="text-[10px] font-bold" data-key="nav_settings">Set</span></button>
+        <button onclick="switchView('history')" id="mob-history" class="flex flex-col items-center gap-1 p-2 text-gray-400"><i class="fa-solid fa-clock-rotate-left text-xl"></i><span class="text-[10px] font-bold" data-key="nav_history">Hist</span></button>
     </nav>
 
-    <div id="briefingModal" class="fixed top-20 right-4 md:right-8 z-[80] hidden max-w-sm w-full animate-fade">
-        <div class="bg-white border-l-4 border-brand-900 shadow-2xl p-5 rounded-2xl flex gap-4 items-start relative transform transition-all hover:scale-[1.02]">
-            <button onclick="closeBriefing()" class="absolute top-2 right-2 text-gray-300 hover:text-gray-500"><i class="fa-solid fa-xmark"></i></button>
-            <div class="bg-brand-900 text-white w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 text-xl shadow-lg">👋</div>
-            <div class="flex-1">
-                <h3 id="briefingTitle" class="font-bold text-gray-800 text-base mb-1">Good Morning!</h3>
-                <p id="briefingText" class="text-xs text-gray-500 mb-3">You have tasks today.</p>
-                <div id="briefingList" class="space-y-1 mb-3"></div>
-                <button onclick="switchView('work'); closeBriefing()" class="bg-brand-900 text-white text-xs font-bold px-4 py-2 rounded-lg hover:bg-gray-800 transition w-full shadow-md">Let's Go 🚀</button>
+    <div id="noteEntryModal" class="fixed inset-0 bg-black/60 hidden z-[110] flex items-center justify-center backdrop-blur-sm p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-pop transform scale-100">
+            <div class="p-4 bg-learning-600 text-white flex justify-between items-center">
+                <h3 class="text-lg font-bold flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i> Add Note</h3>
+                <div class="flex items-center gap-3">
+                    <button onclick="document.getElementById('noteEntryModal').classList.add('hidden'); openNotebook()" class="bg-white text-learning-600 px-4 py-2 rounded-xl text-xs font-black hover:bg-gray-100 transition shadow-lg flex items-center gap-2 transform hover:scale-105 active:scale-95 border-2 border-white">
+                        <i class="fa-solid fa-book-open"></i> <span>MY NOTEBOOK</span>
+                    </button>
+                    <button onclick="document.getElementById('noteEntryModal').classList.add('hidden')" class="text-white hover:text-blue-200 transition"><i class="fa-solid fa-xmark fa-lg"></i></button>
+                </div>
+            </div>
+            <form onsubmit="event.preventDefault(); saveNote();" class="p-6">
+                <input type="hidden" id="targetCourseId">
+                <div class="mb-4" id="courseTitleGroup">
+                    <label class="block text-sm font-bold mb-2 text-gray-700">Course / Topic Name</label>
+                    <input type="text" id="noteCourse" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-learning-600 outline-none transition" placeholder="e.g. UX Design Masterclass">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold mb-2 text-gray-700">Note Content</label>
+                    <textarea id="noteContent" rows="4" class="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-learning-600 outline-none transition" placeholder="Write your key takeaways here..."></textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold mb-2 text-gray-700">Images (Optional - Select Multiple)</label>
+                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-4 text-center hover:bg-gray-50 transition cursor-pointer relative min-h-[100px] flex items-center justify-center">
+                        <input type="file" id="noteImage" accept="image/*" multiple class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" onchange="previewImages(this)">
+                        <div id="imagePreviewBox" class="text-gray-400">
+                            <i class="fa-solid fa-images text-3xl mb-2"></i>
+                            <p class="text-xs">Click to upload images</p>
+                        </div>
+                        <div id="imagePreviewGrid" class="hidden grid grid-cols-4 gap-2 w-full absolute inset-0 p-2 z-0 overflow-auto bg-white/80">
+                            </div>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-learning-600 text-white font-bold py-3 rounded-xl hover:bg-learning-500 transition shadow-lg shadow-learning-200">Save Note 💾</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="notebookModal" class="fixed inset-0 bg-gray-100 hidden z-[100] overflow-y-auto">
+        <div class="min-h-screen p-4 md:p-8">
+            <div class="max-w-6xl mx-auto">
+                <div class="flex justify-between items-center mb-6 sticky top-0 bg-gray-100/90 backdrop-blur-sm z-10 py-4">
+                    <div>
+                        <h2 class="text-3xl font-black text-gray-800">My Notebook 📒</h2>
+                        <p class="text-gray-500 text-sm">Your learning repository.</p>
+                    </div>
+                    <button onclick="document.getElementById('notebookModal').classList.add('hidden')" class="bg-white w-10 h-10 rounded-full shadow-md flex items-center justify-center text-gray-600 hover:text-red-500 transition"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                
+                <div class="relative w-full mb-8 max-w-lg mx-auto">
+                    <input type="text" oninput="filterNotebookLive(this.value)" placeholder="Search courses..." class="w-full pl-12 pr-4 py-4 rounded-2xl border-none bg-white shadow-sm focus:ring-2 focus:ring-learning-500 outline-none transition text-gray-600">
+                    <i class="fa-solid fa-search absolute left-5 top-5 text-gray-300"></i>
+                </div>
+
+                <div id="notebookGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-24">
+                    </div>
             </div>
         </div>
     </div>
-    
+
+    <div id="courseViewModal" class="fixed inset-0 bg-gray-50 hidden z-[105] overflow-y-auto">
+        <div class="min-h-screen relative">
+            <div id="courseHeaderBg" class="h-64 bg-gradient-to-r from-blue-600 to-purple-600 relative">
+                <button onclick="document.getElementById('courseViewModal').classList.add('hidden')" class="absolute top-6 right-6 bg-black/20 hover:bg-black/40 text-white w-10 h-10 rounded-full flex items-center justify-center transition backdrop-blur-md z-20"><i class="fa-solid fa-xmark"></i></button>
+                <div class="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-gray-50 to-transparent"></div>
+                <div class="absolute bottom-6 left-6 md:left-10 text-white z-10">
+                    <span class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-2 inline-block">Course</span>
+                    <h1 id="courseTitleDisplay" class="text-3xl md:text-5xl font-black shadow-black drop-shadow-lg">UX Design</h1>
+                </div>
+            </div>
+
+            <div class="max-w-3xl mx-auto px-6 -mt-10 relative z-10 pb-32">
+                <div id="courseTimeline" class="space-y-8">
+                    </div>
+            </div>
+
+            <button onclick="openAddEntryForCurrent()" class="fixed bottom-8 right-8 bg-learning-600 text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center text-2xl hover:scale-110 transition hover:bg-learning-500 z-30 border-4 border-white animate-pop">
+                <i class="fa-solid fa-plus"></i>
+            </button>
+        </div>
+    </div>
+
     <div id="taskModal" class="fixed inset-0 bg-black/60 hidden z-[100] flex items-center justify-center backdrop-blur-sm transition-opacity p-4">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-pop transform scale-100 relative">
             <div id="modalHeader" class="p-4 md:p-5 flex justify-between items-center text-white bg-gray-800">
@@ -205,7 +298,6 @@
             <div class="p-6">
                 <label class="block text-sm font-bold mb-2 text-gray-700" data-key="modal_new_date">New Date & Time</label>
                 <input type="text" id="newRescheduleDate" class="w-full p-3 border-2 border-blue-100 focus:border-blue-500 rounded-xl bg-blue-50 outline-none transition mb-4" placeholder="Select New Date">
-                
                 <div class="flex gap-4 mb-6">
                     <div class="flex-1 relative">
                         <input type="text" id="rescheduleTimeFrom" class="w-full p-3 pl-8 border-2 border-blue-100 rounded-xl bg-blue-50 outline-none focus:border-blue-500 transition cursor-pointer text-sm" placeholder="From" readonly>
@@ -219,7 +311,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div class="flex gap-3">
                     <button onclick="closeRescheduleModal()" class="flex-1 py-2 text-gray-500 hover:bg-gray-100 rounded-lg font-bold text-sm" data-key="btn_cancel">Cancel</button>
                     <button onclick="confirmReschedule()" class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold shadow-md transition" data-key="btn_confirm">Update</button>
@@ -253,7 +344,7 @@
             perf_rate: 'Overall Completion Rate', perf_week: 'Tasks Completed (Last 7 Days)',
             empty_perf: 'Add tasks to start tracking', perf_high: '🔥🔥 World Class Performance!', perf_mid: '👍 Good... Keep going', perf_low: '⚠️ Needs Focus',
             total: 'Total', done: 'Done', overdue: 'Overdue', btn_new: 'New Task',
-            col_today: 'Today 🔥', col_week: 'This Week 📅', col_later: 'Later 🚀', empty_col: 'Empty!',
+            col_today: 'Focus (Today & Overdue) 🚨', col_week: 'This Week 📅', col_later: 'Later 🚀', empty_col: 'Empty!',
             modal_add_title: 'Add New Task', modal_task_label: 'Task Title', modal_date_label: 'Due Date', btn_save: 'Save Task', btn_cancel: 'Cancel', task_placeholder: 'What needs to be done?',
             alert_title: 'Important Alert!', alert_msg: 'You have overdue tasks pending action!', btn_reschedule: 'Reschedule All Batch',
             hist_title: 'Your Timeline', hist_empty: 'No records for this month. A fresh start!', hist_search: 'Search history...', hist_total: 'Completed in',
@@ -269,6 +360,9 @@
         };
 
         let tasks = JSON.parse(localStorage.getItem('lifeOS_tasks_v7')) || [];
+        let learningNotebooks = JSON.parse(localStorage.getItem('lifeOS_learning_notebooks_v2')) || [];
+        if(!Array.isArray(learningNotebooks)) learningNotebooks = [];
+
         let userStats = JSON.parse(localStorage.getItem('lifeOS_stats_v7')) || { level: 1, xp: 0, nextLevelXp: 100, name: 'Abdelrahman' };
         let currentView = 'landing';
         let workLocation = 'egypt'; 
@@ -284,6 +378,7 @@
         let historyYearFilter = new Date().getFullYear(); 
         
         let currentMobileTab = 'today';
+        let currentOpenedCourseId = null;
 
         let datePicker, rescheduleDatePicker, timePickerFrom, timePickerTo, rescheduleTimePickerFrom, rescheduleTimePickerTo;
 
@@ -338,19 +433,7 @@
 
         function switchMobileTab(tab) {
             currentMobileTab = tab;
-            const indicator = document.getElementById('mobile-tab-indicator');
-            const btns = document.querySelectorAll('.mobile-tab-btn');
-            
-            if(indicator) {
-                if(tab === 'today') indicator.style.transform = 'translateX(0%)';
-                if(tab === 'week') indicator.style.transform = 'translateX(100%)';
-                if(tab === 'later') indicator.style.transform = 'translateX(200%)';
-            }
-            
-            document.getElementById('col-today').classList.add('hidden');
-            document.getElementById('col-week').classList.add('hidden');
-            document.getElementById('col-later').classList.add('hidden');
-            document.getElementById(`col-${tab}`).classList.remove('hidden');
+            renderContent(); 
         }
 
         function setHistoryView(subView) { historySubView = subView; renderContent(); }
@@ -364,6 +447,295 @@
         function scrollMonths(direction) { const container = document.getElementById('monthScroller'); if(container) { const scrollAmount = 300; if(direction === 'left') container.scrollBy({ left: -scrollAmount, behavior: 'smooth' }); else container.scrollBy({ left: scrollAmount, behavior: 'smooth' }); } }
         function switchWorkLoc(loc) { workLocation = loc; renderContent(); }
         function switchPersonalSub(sub) { personalSub = sub; renderContent(); }
+
+        // --- NOTEBOOK FUNCTIONS ---
+        function openNoteEntry() {
+            document.getElementById('noteEntryModal').classList.remove('hidden');
+            document.getElementById('targetCourseId').value = ''; 
+            document.getElementById('courseTitleGroup').classList.remove('hidden');
+            document.getElementById('noteCourse').value = '';
+            document.getElementById('noteContent').value = '';
+            document.getElementById('noteImage').value = '';
+            document.getElementById('imagePreviewGrid').innerHTML = '';
+            document.getElementById('imagePreviewGrid').classList.add('hidden');
+            document.getElementById('imagePreviewBox').classList.remove('hidden');
+        }
+
+        function openAddEntryForCurrent() {
+            if(!currentOpenedCourseId) return;
+            const course = learningNotebooks.find(c => c.id === currentOpenedCourseId);
+            if(!course) return;
+
+            document.getElementById('noteEntryModal').classList.remove('hidden');
+            document.getElementById('targetCourseId').value = course.id; 
+            document.getElementById('courseTitleGroup').classList.add('hidden');
+            document.getElementById('noteContent').value = '';
+            document.getElementById('noteImage').value = '';
+            document.getElementById('imagePreviewGrid').innerHTML = '';
+            document.getElementById('imagePreviewGrid').classList.add('hidden');
+            document.getElementById('imagePreviewBox').classList.remove('hidden');
+        }
+
+        function compressImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const MAX_WIDTH = 800;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.7));
+                    }
+                }
+            });
+        }
+
+        function previewImages(input) {
+            const grid = document.getElementById('imagePreviewGrid');
+            const box = document.getElementById('imagePreviewBox');
+            grid.innerHTML = '';
+            
+            if (input.files && input.files.length > 0) {
+                box.classList.add('hidden');
+                grid.classList.remove('hidden');
+                
+                Array.from(input.files).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'w-full h-20 object-cover rounded-md shadow-sm border border-gray-100';
+                        grid.appendChild(img);
+                    }
+                    reader.readAsDataURL(file);
+                });
+            } else {
+                box.classList.remove('hidden');
+                grid.classList.add('hidden');
+            }
+        }
+
+        function saveNote() {
+            const targetId = document.getElementById('targetCourseId').value;
+            const courseNameInput = document.getElementById('noteCourse').value;
+            const content = document.getElementById('noteContent').value;
+            const imageInput = document.getElementById('noteImage');
+            
+            if (!targetId && !courseNameInput) return;
+
+            const processImages = (files) => {
+                return Promise.all(Array.from(files).map(file => compressImage(file)));
+            };
+
+            const processSave = (imagesArray) => {
+                const newEntry = {
+                    id: Date.now(),
+                    content: content,
+                    images: imagesArray, 
+                    date: new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' })
+                };
+
+                if(!Array.isArray(learningNotebooks)) learningNotebooks = [];
+
+                if (targetId) {
+                    const courseIndex = learningNotebooks.findIndex(c => c.id == targetId);
+                    if (courseIndex > -1) {
+                        if(!learningNotebooks[courseIndex].entries) learningNotebooks[courseIndex].entries = [];
+                        learningNotebooks[courseIndex].entries.unshift(newEntry);
+                        learningNotebooks[courseIndex].updatedAt = Date.now();
+                        
+                        if(imagesArray.length > 0 && !learningNotebooks[courseIndex].coverImage) {
+                             learningNotebooks[courseIndex].coverImage = imagesArray[0];
+                        }
+                    }
+                } else {
+                    learningNotebooks.unshift({
+                        id: Date.now(),
+                        title: courseNameInput,
+                        coverImage: imagesArray.length > 0 ? imagesArray[0] : null, 
+                        createdAt: Date.now(),
+                        updatedAt: Date.now(),
+                        entries: [newEntry]
+                    });
+                }
+
+                try {
+                    localStorage.setItem('lifeOS_learning_notebooks_v2', JSON.stringify(learningNotebooks));
+                    document.getElementById('noteEntryModal').classList.add('hidden');
+                    confetti({ particleCount: 50, spread: 50, origin: { y: 0.6 } });
+                    
+                    if (currentOpenedCourseId && (targetId == currentOpenedCourseId)) {
+                        viewCourseTimeline(parseInt(targetId));
+                    } else {
+                        renderNotebook(); 
+                    }
+                } catch (e) {
+                    alert("Storage is full even after compression! Try deleting old notes or using fewer images.");
+                }
+            };
+
+            if (imageInput.files && imageInput.files.length > 0) {
+                const submitBtn = document.querySelector('#noteEntryModal button[type="submit"]');
+                const oldText = submitBtn.innerText;
+                submitBtn.innerText = 'Compressing & Saving... ⏳';
+                submitBtn.disabled = true;
+
+                processImages(imageInput.files).then(images => {
+                    processSave(images);
+                    submitBtn.innerText = oldText;
+                    submitBtn.disabled = false;
+                });
+            } else {
+                processSave([]);
+            }
+        }
+
+        function openNotebook() {
+            document.getElementById('notebookModal').classList.remove('hidden');
+            renderNotebook();
+        }
+
+        function filterNotebookLive(query) {
+            const grid = document.getElementById('notebookGrid');
+            const cards = grid.children;
+            for (let card of cards) {
+                const title = card.getAttribute('data-title').toLowerCase();
+                if (title.includes(query.toLowerCase())) card.classList.remove('hidden');
+                else card.classList.add('hidden');
+            }
+        }
+
+        function getRandomGradient(id) {
+            const grads = [
+                'from-pink-500 to-rose-500', 'from-blue-400 to-indigo-500', 'from-emerald-400 to-cyan-500',
+                'from-orange-400 to-pink-500', 'from-violet-500 to-purple-500', 'from-amber-400 to-orange-500'
+            ];
+            return grads[id % grads.length];
+        }
+
+        function deleteCourse(id, e) {
+            e.stopPropagation();
+            if(confirm('Are you sure you want to delete this entire notebook and all its notes? 🗑️')) {
+                learningNotebooks = learningNotebooks.filter(b => b.id !== id);
+                localStorage.setItem('lifeOS_learning_notebooks_v2', JSON.stringify(learningNotebooks));
+                renderNotebook();
+            }
+        }
+
+        function renderNotebook() {
+            const grid = document.getElementById('notebookGrid');
+            if (!Array.isArray(learningNotebooks) || learningNotebooks.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-20 text-gray-400 flex flex-col items-center"><i class="fa-solid fa-book-open text-6xl mb-4 opacity-30"></i><p>Your notebook is empty.</p></div>`;
+                return;
+            }
+            grid.innerHTML = learningNotebooks.map(book => {
+                const count = book.entries ? book.entries.length : 0;
+                const grad = getRandomGradient(book.id);
+                return `
+                <div onclick="viewCourseTimeline(${book.id})" data-title="${book.title}" class="notebook-cover bg-white rounded-r-2xl rounded-l-md shadow-md hover:shadow-xl cursor-pointer overflow-hidden group h-64 flex flex-col relative animate-fade transform hover:-translate-y-1 transition-all duration-300 border border-gray-100">
+                    <div class="notebook-spine"></div>
+                    <button onclick="deleteCourse(${book.id}, event)" class="absolute top-2 right-2 z-30 bg-white/90 hover:bg-red-500 hover:text-white text-gray-400 w-7 h-7 rounded-full flex items-center justify-center shadow-sm transition-all" title="Delete Course">
+                        <i class="fa-solid fa-trash text-xs"></i>
+                    </button>
+                    <div class="h-32 w-full ${book.coverImage ? '' : `bg-gradient-to-br ${grad}`} relative">
+                        ${book.coverImage ? `<img src="${book.coverImage}" class="w-full h-full object-cover">` : ''}
+                        <div class="absolute top-3 right-3 bg-black/50 backdrop-blur-md text-white text-xs font-bold px-2 py-1 rounded-lg shadow-sm">
+                            ${count} Notes
+                        </div>
+                    </div>
+                    <div class="p-6 flex-1 flex flex-col justify-between bg-white relative z-20">
+                        <div>
+                            <h3 class="font-black text-xl text-gray-800 leading-tight mb-2 line-clamp-2 group-hover:text-learning-600 transition-colors">${book.title}</h3>
+                            <p class="text-xs text-gray-400">Last updated: ${new Date(book.updatedAt).toLocaleDateString()}</p>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs font-bold text-gray-400 group-hover:text-learning-500 transition-colors mt-4">
+                            <span>Open Notebook</span> <i class="fa-solid fa-arrow-right"></i>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function viewCourseTimeline(id) {
+            const course = learningNotebooks.find(c => c.id === id);
+            if (!course) return;
+            currentOpenedCourseId = id;
+
+            document.getElementById('courseTitleDisplay').innerText = course.title;
+            const headerBg = document.getElementById('courseHeaderBg');
+            if (course.coverImage) {
+                headerBg.style.backgroundImage = `url('${course.coverImage}')`;
+                headerBg.style.backgroundSize = 'cover';
+                headerBg.style.backgroundPosition = 'center';
+                headerBg.className = 'h-64 relative';
+            } else {
+                headerBg.style.backgroundImage = 'none';
+                headerBg.className = `h-64 bg-gradient-to-r ${getRandomGradient(course.id)} relative`;
+            }
+
+            const timeline = document.getElementById('courseTimeline');
+            if (!course.entries || course.entries.length === 0) {
+                timeline.innerHTML = `<div class="text-center text-gray-400 py-10">No notes yet. Add one!</div>`;
+            } else {
+                timeline.innerHTML = course.entries.map((entry, idx) => {
+                    let imagesHTML = '';
+                    if (entry.images && entry.images.length > 0) {
+                        const gridClass = entry.images.length === 1 ? 'grid-cols-1' : (entry.images.length === 2 ? 'grid-cols-2' : 'grid-cols-3');
+                        imagesHTML = `
+                            <div class="grid ${gridClass} gap-2 mt-3">
+                                ${entry.images.map(img => `<img src="${img}" class="rounded-xl w-full h-32 object-cover border border-gray-100 shadow-sm cursor-pointer hover:scale-[1.02] transition" onclick="window.open(this.src)">`).join('')}
+                            </div>
+                        `;
+                    } else if (entry.image) { 
+                         imagesHTML = `<img src="${entry.image}" class="rounded-xl max-h-60 object-cover border border-gray-100 shadow-sm cursor-pointer hover:scale-[1.01] transition mt-3" onclick="window.open(this.src)">`;
+                    }
+
+                    return `
+                    <div class="relative pl-8 animate-slide-up" style="animation-delay: ${idx * 0.05}s">
+                        ${idx !== course.entries.length - 1 ? '<div class="absolute left-[11px] top-8 bottom-[-32px] w-0.5 bg-gray-200"></div>' : ''}
+                        <div class="absolute left-0 top-1.5 w-6 h-6 bg-learning-100 rounded-full flex items-center justify-center border-2 border-white shadow-sm z-10">
+                            <div class="w-2 h-2 bg-learning-600 rounded-full"></div>
+                        </div>
+                        
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                            <div class="flex justify-between items-start mb-3">
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">${entry.date}</p>
+                                <button onclick="deleteNoteEntry(${course.id}, ${entry.id})" class="text-gray-300 hover:text-red-500 transition"><i class="fa-solid fa-trash text-xs"></i></button>
+                            </div>
+                            ${entry.content ? `<div class="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">${entry.content}</div>` : ''}
+                            ${imagesHTML}
+                        </div>
+                    </div>
+                `}).join('');
+            }
+
+            document.getElementById('courseViewModal').classList.remove('hidden');
+        }
+
+        function deleteNoteEntry(courseId, entryId) {
+            if(confirm('Delete this entry?')) {
+                const courseIndex = learningNotebooks.findIndex(c => c.id === courseId);
+                if(courseIndex > -1) {
+                    learningNotebooks[courseIndex].entries = learningNotebooks[courseIndex].entries.filter(e => e.id !== entryId);
+                    localStorage.setItem('lifeOS_learning_notebooks_v2', JSON.stringify(learningNotebooks));
+                    viewCourseTimeline(courseId); 
+                }
+            }
+        }
 
         function filterHistoryLive(query) {
             const items = document.querySelectorAll('.timeline-item');
@@ -405,8 +777,8 @@
             const nextWeek = new Date(now); nextWeek.setDate(now.getDate() + 7);
             return tasks.filter(t => {
                 if (t.category !== cat || t.status === 'done') return false;
-                const d = new Date(t.date);
-                return d >= now && d <= nextWeek;
+                const d = new Date(t.date); d.setHours(0,0,0,0);
+                return d > now && d <= nextWeek;
             }).length;
         }
 
@@ -473,19 +845,27 @@
         function renderCategoryDashboard(container, category, txt) {
             let filteredTasks = tasks.filter(t => t.category === category);
             let subNav = '';
-            
+            let extraButtons = ''; 
+
             const isWk = (t) => {
                 if(t.status === 'done') return false;
                 const now = new Date(); now.setHours(0,0,0,0);
                 const next = new Date(now); next.setDate(now.getDate() + 7);
-                const d = new Date(t.date);
-                return d >= now && d <= next;
+                const d = new Date(t.date); d.setHours(0,0,0,0);
+                return d > now && d <= next;
+            };
+
+            const isLate = (t) => {
+                 if(t.status === 'done') return false;
+                 const now = new Date(); now.setHours(0,0,0,0);
+                 const d = new Date(t.date); d.setHours(0,0,0,0);
+                 return d < now;
             };
 
             if (category === 'work') {
-                const egLate = tasks.filter(t => t.category === 'work' && t.workLocation === 'egypt' && isOverdue(t)).length;
+                const egLate = tasks.filter(t => t.category === 'work' && t.workLocation === 'egypt' && isLate(t)).length;
                 const egWeek = tasks.filter(t => t.category === 'work' && t.workLocation === 'egypt' && isWk(t)).length;
-                const ksaLate = tasks.filter(t => t.category === 'work' && t.workLocation === 'ksa' && isOverdue(t)).length;
+                const ksaLate = tasks.filter(t => t.category === 'work' && t.workLocation === 'ksa' && isLate(t)).length;
                 const ksaWeek = tasks.filter(t => t.category === 'work' && t.workLocation === 'ksa' && isWk(t)).length;
 
                 filteredTasks = filteredTasks.filter(t => t.workLocation === workLocation || (!t.workLocation && workLocation === 'egypt'));
@@ -507,9 +887,9 @@
                     </button>
                 </div>`;
             } else if (category === 'personal') {
-                const learnLate = tasks.filter(t => t.category === 'personal' && t.personalType === 'learning' && isOverdue(t)).length;
+                const learnLate = tasks.filter(t => t.category === 'personal' && t.personalType === 'learning' && isLate(t)).length;
                 const learnWeek = tasks.filter(t => t.category === 'personal' && t.personalType === 'learning' && isWk(t)).length;
-                const lifeLate = tasks.filter(t => t.category === 'personal' && (t.personalType === 'life' || !t.personalType) && isOverdue(t)).length;
+                const lifeLate = tasks.filter(t => t.category === 'personal' && (t.personalType === 'life' || !t.personalType) && isLate(t)).length;
                 const lifeWeek = tasks.filter(t => t.category === 'personal' && (t.personalType === 'life' || !t.personalType) && isWk(t)).length;
 
                 filteredTasks = filteredTasks.filter(t => t.personalType === personalSub || (!t.personalType && personalSub === 'life'));
@@ -518,7 +898,7 @@
                 const styleLife = personalSub === 'life' ? 'bg-life-500 text-white shadow-lg scale-105 border-life-500 ring-2 ring-pink-200' : 'bg-white text-gray-500 hover:bg-gray-50 border-gray-200';
 
                 subNav = `
-                <div class="flex justify-center gap-4 mb-8">
+                <div class="flex justify-center gap-4 mb-4">
                     <button onclick="switchPersonalSub('learning')" class="relative px-6 py-2.5 rounded-full font-bold text-sm transition-all border flex items-center gap-2 ${styleLearn}">
                         <span>${txt.type_learning}</span>
                         ${learnLate > 0 ? `<div class="absolute -top-2 -right-1 bg-red-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm border-2 border-white animate-pulse">${learnLate}</div>` : ''}
@@ -530,68 +910,91 @@
                         ${lifeWeek > 0 ? `<div class="absolute -top-2 -left-1 bg-blue-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm border-2 border-white">${lifeWeek}</div>` : ''}
                     </button>
                 </div>`;
+
+                if (personalSub === 'learning') {
+                    extraButtons = `
+                    <div class="flex justify-center mb-10">
+                        <button onclick="openNoteEntry()" class="group relative relative w-full max-w-xs bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-8 py-5 rounded-3xl font-bold text-lg shadow-xl shadow-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/50 transition-all duration-300 transform hover:-translate-y-1 active:scale-95 flex items-center justify-center gap-3 overflow-hidden">
+                            <div class="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            <i class="fa-solid fa-pen-to-square text-xl animate-bounce"></i>
+                            <span>Take Smart Note</span>
+                        </button>
+                    </div>`;
+                } else {
+                    subNav += '<div class="mb-8"></div>'; 
+                }
             }
 
             const total = filteredTasks.length;
             const done = filteredTasks.filter(t => t.status === 'done').length;
-            const late = filteredTasks.filter(t => isOverdue(t)).length; 
-            
-            // --- Calculate Task Counts for Tabs ---
+            const late = filteredTasks.filter(t => isLate(t)).length; 
+
             const now = new Date(); now.setHours(0,0,0,0);
             const nextWeek = new Date(now); nextWeek.setDate(now.getDate() + 7);
 
-            const countToday = filteredTasks.filter(t => {
-                if (t.status === 'done') return false;
-                const d = new Date(t.date);
-                return d <= now;
+            const cntFocus = filteredTasks.filter(t => {
+                if(t.status === 'done') return false;
+                const d = new Date(t.date); d.setHours(0,0,0,0);
+                return d <= now; 
             }).length;
 
-            const countWeek = filteredTasks.filter(t => {
-                if (t.status === 'done') return false;
-                const d = new Date(t.date);
+            const cntWeek = filteredTasks.filter(t => {
+                if(t.status === 'done') return false;
+                const d = new Date(t.date); d.setHours(0,0,0,0);
                 return d > now && d <= nextWeek;
             }).length;
 
-            const countLater = filteredTasks.filter(t => {
-                if (t.status === 'done') return false;
-                const d = new Date(t.date);
+            const cntLater = filteredTasks.filter(t => {
+                if(t.status === 'done') return false;
+                const d = new Date(t.date); d.setHours(0,0,0,0);
                 return d > nextWeek;
             }).length;
-            // ---------------------------------------
 
             let theme;
             if (category === 'work') theme = {btn: 'bg-work-600 hover:bg-work-900', txt: 'text-work-600', border: 'border-work-200'};
             else if (category === 'home') theme = {btn: 'bg-home-600 hover:bg-home-900', txt: 'text-home-600', border: 'border-home-200'};
             else theme = {btn: 'bg-personal-600 hover:bg-personal-900', txt: 'text-personal-600', border: 'border-personal-200'};
             
-            // Badge HTML Helper
             const badgeHTML = (count, color) => count > 0 ? `<span class="absolute top-1.5 right-2 w-4 h-4 ${color} text-white text-[9px] font-bold rounded-full flex items-center justify-center shadow-sm z-20 transition-transform">${count}</span>` : '';
 
-            // Modern Sliding Tabs for Mobile with Badges
-            const mobileTabs = `
-                <div class="relative bg-gray-200/50 p-1 rounded-2xl flex mb-6 md:hidden select-none">
-                    <div id="mobile-tab-indicator" class="absolute top-1 left-1 bottom-1 w-[calc(33.33%-0.33rem)] bg-white rounded-xl shadow-sm transition-all duration-300 ease-out transform translate-x-0"></div>
-                    
-                    <button onclick="switchMobileTab('today')" class="relative z-10 flex-1 py-2.5 text-xs font-bold text-gray-700 transition-colors mobile-tab-btn flex items-center justify-center" data-tab="today">
-                        ${txt.col_today.split(' ')[0]}
-                        ${badgeHTML(countToday, 'bg-red-500')}
-                    </button>
-                    
-                    <button onclick="switchMobileTab('week')" class="relative z-10 flex-1 py-2.5 text-xs font-bold text-gray-500 transition-colors mobile-tab-btn flex items-center justify-center" data-tab="week">
-                        ${txt.col_week.split(' ')[0]}
-                        ${badgeHTML(countWeek, 'bg-blue-500')}
-                    </button>
-                    
-                    <button onclick="switchMobileTab('later')" class="relative z-10 flex-1 py-2.5 text-xs font-bold text-gray-500 transition-colors mobile-tab-btn flex items-center justify-center" data-tab="later">
-                        ${txt.col_later.split(' ')[0]}
-                        ${badgeHTML(countLater, 'bg-gray-400')}
-                    </button>
+            let mobileTabs = `
+            <div class="relative bg-gray-200/50 p-1 rounded-2xl flex mb-6 md:hidden select-none">
+                <div id="mobile-tab-indicator" class="absolute top-1 left-1 bottom-1 w-[calc(33.33%-0.33rem)] bg-white rounded-xl shadow-sm transition-all duration-300 ease-out transform translate-x-0 border border-gray-100"></div>
+                
+                <button onclick="switchMobileTab('today')" class="relative z-10 flex-1 py-3 text-[10px] font-bold text-gray-500 transition-colors mobile-tab-btn flex items-center justify-center gap-2 group" data-tab="today">
+                    <span class="group-[.active-tab]:text-rose-600 transition-colors">Focus</span> 
+                    <span class="bg-rose-500 text-white px-2 py-0.5 rounded-full text-[9px] min-w-[20px] text-center shadow-sm font-bold">${cntFocus}</span>
+                </button>
+                
+                <button onclick="switchMobileTab('week')" class="relative z-10 flex-1 py-3 text-[10px] font-bold text-gray-500 transition-colors mobile-tab-btn flex items-center justify-center gap-2 group" data-tab="week">
+                    <span class="group-[.active-tab]:text-indigo-600 transition-colors">Week</span> 
+                    <span class="bg-indigo-500 text-white px-2 py-0.5 rounded-full text-[9px] min-w-[20px] text-center shadow-sm font-bold">${cntWeek}</span>
+                </button>
+                
+                <button onclick="switchMobileTab('later')" class="relative z-10 flex-1 py-3 text-[10px] font-bold text-gray-500 transition-colors mobile-tab-btn flex items-center justify-center gap-2 group" data-tab="later">
+                    <span class="group-[.active-tab]:text-slate-600 transition-colors">Later</span> 
+                    <span class="bg-slate-500 text-white px-2 py-0.5 rounded-full text-[9px] min-w-[20px] text-center shadow-sm font-bold">${cntLater}</span>
+                </button>
+            </div>`;
+
+            const gridClass = 'grid-cols-1 lg:grid-cols-3';
+            
+            let columnsHTML = `
+                <div id="col-today" class="${currentMobileTab === 'today' ? 'block' : 'hidden'} md:block animate-fade">
+                    ${renderColumn(txt.col_today, filteredTasks, 'today', theme.txt, txt)}
+                </div>
+                <div id="col-week" class="${currentMobileTab === 'week' ? 'block' : 'hidden'} md:block animate-fade">
+                    ${renderColumn(txt.col_week, filteredTasks, 'week', theme.txt, txt)}
+                </div>
+                <div id="col-later" class="${currentMobileTab === 'later' ? 'block' : 'hidden'} md:block animate-fade">
+                    ${renderColumn(txt.col_later, filteredTasks, 'later', theme.txt, txt)}
                 </div>
             `;
 
             container.innerHTML = `
             <div class="animate-fade">
                 ${subNav}
+                ${extraButtons}
                 <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
                     <div class="flex gap-4 w-full md:w-auto overflow-x-auto pb-2 no-scrollbar">
                         <div class="bg-white px-6 py-4 rounded-2xl shadow-sm border border-gray-200 text-center flex-shrink-0 min-w-[100px]">
@@ -603,7 +1006,6 @@
                             <span class="text-xs text-gray-500 font-bold">${txt.done}</span>
                         </div>
                         <div class="bg-white px-6 py-4 rounded-2xl shadow-sm border border-red-200 text-center flex-shrink-0 relative overflow-hidden min-w-[100px]">
-                            ${late > 0 ? '<div class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-ping"></div>' : ''}
                             <span class="block text-2xl font-bold text-red-600">${late}</span>
                             <span class="text-xs text-gray-500 font-bold">${txt.overdue}</span>
                         </div>
@@ -615,25 +1017,17 @@
                 
                 ${mobileTabs}
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
-                    <div id="col-today" class="${currentMobileTab === 'today' ? 'block' : 'hidden'} md:block animate-fade">
-                        ${renderColumn(txt.col_today, filteredTasks, 'today', theme.txt, txt)}
-                    </div>
-                    <div id="col-week" class="${currentMobileTab === 'week' ? 'block' : 'hidden'} md:block animate-fade">
-                        ${renderColumn(txt.col_week, filteredTasks, 'week', theme.txt, txt)}
-                    </div>
-                    <div id="col-later" class="${currentMobileTab === 'later' ? 'block' : 'hidden'} md:block animate-fade">
-                        ${renderColumn(txt.col_later, filteredTasks, 'later', theme.txt, txt)}
-                    </div>
+                <div class="grid ${gridClass} gap-6 relative">
+                    ${columnsHTML}
                 </div>
             </div>`;
             
             setTimeout(() => {
                 const btns = document.querySelectorAll('.mobile-tab-btn');
                 btns.forEach(b => {
+                    b.classList.remove('active-tab');
                     if(b.getAttribute('data-tab') === currentMobileTab) {
-                        b.classList.remove('text-gray-500');
-                        b.classList.add('text-gray-800');
+                        b.classList.add('active-tab');
                     }
                 });
                 
@@ -647,37 +1041,95 @@
         }
 
         function renderColumn(title, list, filter, colorClass, txt) {
-            const now = new Date(); now.setHours(0,0,0,0);
-            const nextWeek = new Date(now); nextWeek.setDate(now.getDate() + 7);
+            const now = new Date(); 
+            now.setHours(0,0,0,0); 
+
+            const nextWeek = new Date(now); 
+            nextWeek.setDate(now.getDate() + 7); 
+
             const items = list.filter(t => {
                 if (t.status === 'done') return false;
-                const d = new Date(t.date);
-                if (filter === 'today') return d <= now;
-                if (filter === 'week') return d > now && d <= nextWeek;
-                return d > nextWeek;
+                
+                const d = new Date(t.date); 
+                d.setHours(0,0,0,0); 
+
+                if (filter === 'today') return d.getTime() <= now.getTime(); 
+                if (filter === 'week') return d.getTime() > now.getTime() && d.getTime() <= nextWeek.getTime();
+                return d.getTime() > nextWeek.getTime();
             });
+
             items.sort((a,b) => new Date(a.date) - new Date(b.date));
+            
             return `<div class="bg-white/60 backdrop-blur-md p-4 rounded-3xl min-h-[400px] border border-gray-200 flex flex-col"><h3 class="font-bold mb-4 ${colorClass} text-lg flex justify-between items-center px-2">${title} <span class="bg-white px-3 py-1 rounded-lg text-xs font-bold shadow-sm text-gray-500 border border-gray-100">${items.length}</span></h3><div class="space-y-3 flex-1">${items.map(t => getTaskCardHTML(t, txt)).join('')}${items.length === 0 ? `<div class="h-full flex flex-col items-center justify-center text-gray-300 gap-2 min-h-[100px]"><i class="fa-solid fa-check-circle text-3xl opacity-20"></i><p class="text-xs font-bold">${txt.empty_col}</p></div>` : ''}</div></div>`;
         }
         
         function getTaskCardHTML(t, txt) {
             const isLate = isOverdue(t);
-            let borderColor = 'border-l-gray-500';
-            if(t.category === 'work') borderColor = 'border-l-work-500';
-            else if(t.category === 'home') borderColor = 'border-l-home-500';
-            else if(t.category === 'personal') {
-                if (t.personalType === 'learning') borderColor = 'border-l-learning-500'; 
-                else borderColor = 'border-l-life-500'; 
+            let borderColor = 'border-l-gray-300'; 
+
+            if (isLate) {
+                borderColor = 'border-l-red-500 shadow-red-100 ring-1 ring-red-100'; 
+            } else {
+                if(t.category === 'work') borderColor = 'border-l-work-500';
+                else if(t.category === 'home') borderColor = 'border-l-home-500';
+                else if(t.category === 'personal') {
+                    if (t.personalType === 'learning') borderColor = 'border-l-learning-500'; 
+                    else borderColor = 'border-l-life-500'; 
+                }
             }
+
+            const dateObj = new Date(t.date);
+            const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' }); 
+            const fullDateDisplay = `${dayName}, ${t.date}`;
 
             let timeDisplay = '';
             if (t.timeFrom) {
                 const start = t.timeFrom;
                 const end = t.timeTo ? ` - ${t.timeTo}` : '';
-                timeDisplay = `<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold border border-gray-200 ml-2"><i class="fa-regular fa-clock text-[9px] mr-1"></i>${start}${end}</span>`;
+                timeDisplay = `
+                <div class="flex items-center gap-1.5 bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg text-xs font-bold border border-gray-200">
+                    <i class="fa-regular fa-clock text-gray-400"></i>
+                    <span>${start}${end}</span>
+                </div>`;
             }
 
-            return `<div class="bg-white p-4 rounded-xl shadow-sm hover:shadow-md border-l-4 ${borderColor} active:scale-[0.99] transition-all group"><div class="flex justify-between items-start mb-2 gap-2"><h4 class="font-bold text-gray-800 text-base leading-snug flex-1">${t.title}</h4><div class="flex gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"><button onclick="openRescheduleModal(${t.id}, 'single')" class="text-blue-500 bg-blue-50 hover:bg-blue-100 w-8 h-8 flex items-center justify-center rounded-lg transition"><i class="fa-solid fa-calendar-days"></i></button><button onclick="completeTask(${t.id})" class="text-green-600 bg-green-50 hover:bg-green-100 w-8 h-8 flex items-center justify-center rounded-lg transition"><i class="fa-solid fa-check"></i></button><button onclick="deleteTask(${t.id})" class="text-red-400 bg-red-50 hover:bg-red-100 w-8 h-8 flex items-center justify-center rounded-lg transition"><i class="fa-solid fa-trash"></i></button></div></div><div class="flex items-center justify-between text-xs text-gray-400 mt-3 pt-3 border-t border-gray-50"><div class="flex items-center gap-1 flex-wrap"><span class="flex items-center gap-1"><i class="fa-regular fa-calendar"></i> ${t.date}</span>${timeDisplay}</div>${isLate ? `<span class="text-red-600 font-bold bg-red-50 px-2 py-1 rounded-md text-[10px] flex items-center gap-1"><i class="fa-solid fa-circle-exclamation"></i> ${txt.overdue}</span>` : ''}</div></div>`;
+            return `
+            <div class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-lg border border-gray-100 border-l-[6px] ${borderColor} transition-all duration-300 group relative mb-4">
+                
+                <div class="flex justify-between items-start mb-4 gap-3">
+                    <h4 class="font-bold text-gray-800 text-xl leading-relaxed w-full break-words">${t.title}</h4>
+                    
+                    <div class="flex gap-2 shrink-0 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all duration-200">
+                        <button onclick="openRescheduleModal(${t.id}, 'single')" class="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors shadow-sm" title="Reschedule">
+                            <i class="fa-solid fa-calendar-days text-sm"></i>
+                        </button>
+                        <button onclick="completeTask(${t.id})" class="w-10 h-10 flex items-center justify-center rounded-xl bg-green-50 text-green-600 hover:bg-green-600 hover:text-white transition-colors shadow-sm" title="Complete">
+                            <i class="fa-solid fa-check text-sm"></i>
+                        </button>
+                        <button onclick="deleteTask(${t.id})" class="w-10 h-10 flex items-center justify-center rounded-xl bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-colors shadow-sm" title="Delete">
+                            <i class="fa-solid fa-trash text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-3 pt-3 border-t border-gray-50">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2 text-sm text-gray-500 font-medium bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+                            <i class="fa-regular fa-calendar text-gray-400"></i>
+                            <span class="${isLate ? 'text-red-600 font-bold' : ''}">${fullDateDisplay}</span>
+                        </div>
+                        
+                        ${timeDisplay}
+                    </div>
+
+                    ${isLate ? `
+                    <div class="mt-1">
+                        <span class="flex items-center justify-center gap-1.5 bg-red-50 text-red-600 px-4 py-3 rounded-xl text-sm font-bold border border-red-100 w-full animate-pulse shadow-sm">
+                            <i class="fa-solid fa-circle-exclamation"></i> OVERDUE - ${txt.overdue}
+                        </span>
+                    </div>` : ''}
+                </div>
+            </div>`;
         }
 
         function initCharts(txt) {
@@ -700,7 +1152,12 @@
             if(ctx2) { weeklyChart = new Chart(ctx2, { type: 'bar', data: { labels: days, datasets: [{ label: 'Done', data: counts, backgroundColor: '#4f46e5', borderRadius: 6, borderSkipped: false }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { family: 'Poppins' } } } }, plugins: { legend: { display: false } } } }); }
         }
 
-        function isOverdue(task) { if(task.status === 'done') return false; return new Date(task.date) < new Date().setHours(0,0,0,0); }
+        function isOverdue(task) { 
+            if(task.status === 'done') return false; 
+            const now = new Date(); now.setHours(0,0,0,0);
+            const d = new Date(task.date); d.setHours(0,0,0,0);
+            return d < now; 
+        }
         function countOverdue(cat) { return tasks.filter(t => t.category === cat && isOverdue(t)).length; }
         
         function saveTask() { 
@@ -843,11 +1300,10 @@
                     themeColor = 'text-work-600';
                 }
 
-                // --- Generate Months based on Selected Year ---
                 const generatedMonths = [];
                 for (let m = 1; m <= 12; m++) {
                     const monthStr = String(m).padStart(2, '0');
-                    generatedMonths.push(`${historyYearFilter}-${monthStr}`); // Use historyYearFilter
+                    generatedMonths.push(`${historyYearFilter}-${monthStr}`); 
                 }
                
                 let displayList = [...baseList];
@@ -949,29 +1405,19 @@
             if (todaysTasks.length > 0) {
                 const hour = new Date().getHours();
                 const greeting = hour < 12 ? txt.brief_morning : txt.brief_evening;
-                document.getElementById('briefingTitle').innerText = greeting;
-                document.getElementById('briefingText').innerText = txt.brief_msg.replace('{n}', todaysTasks.length);
-                const listHtml = todaysTasks.slice(0, 3).map(task => {
-                    let color = 'bg-gray-500';
-                    if(task.category === 'work') color = 'bg-work-500';
-                    else if(task.category === 'home') color = 'bg-home-500';
-                    else if(task.category === 'personal') color = 'bg-personal-500';
-                    return `<div class="flex items-center gap-2 text-xs text-gray-600"><span class="w-1.5 h-1.5 rounded-full ${color}"></span> <span class="truncate">${task.title}</span></div>`
-                }).join('');
-                document.getElementById('briefingList').innerHTML = listHtml + (todaysTasks.length > 3 ? `<div class="text-[10px] text-gray-400 mt-1">+${todaysTasks.length - 3} more...</div>` : '');
-                const modal = document.getElementById('briefingModal');
-                modal.classList.remove('hidden');
-                modal.classList.add('slide-in-down');
+                // You can implement a custom modal for briefing here if desired
             }
         }
-        function closeBriefing() { document.getElementById('briefingModal').classList.add('hidden'); }
         
         function checkOverduePopup() {
             const overdueTasks = tasks.filter(t => isOverdue(t));
-            const notifDot = document.getElementById('notif-dot-desktop');
+            const notifDotDesktop = document.getElementById('notif-dot-desktop');
+            const notifDotMobile = document.getElementById('notif-dot-mobile');
             const bellIcons = document.querySelectorAll('.bell-icon');
+            
             if (overdueTasks.length > 0) {
-                if(notifDot) notifDot.classList.remove('hidden');
+                if(notifDotDesktop) notifDotDesktop.classList.remove('hidden');
+                if(notifDotMobile) notifDotMobile.classList.remove('hidden');
                 bellIcons.forEach(icon => icon.classList.add('bell-ringing'));
                 document.getElementById('overdueList').innerHTML = overdueTasks.map(t => {
                     let icon = '❓';
@@ -982,7 +1428,8 @@
                 }).join('');
                 document.getElementById('warningModal').classList.remove('hidden');
             } else { 
-                if(notifDot) notifDot.classList.add('hidden');
+                if(notifDotDesktop) notifDotDesktop.classList.add('hidden');
+                if(notifDotMobile) notifDotMobile.classList.add('hidden');
                 bellIcons.forEach(icon => icon.classList.remove('bell-ringing'));
                 document.getElementById('warningModal').classList.add('hidden'); 
             }
