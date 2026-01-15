@@ -46,7 +46,6 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
         .flatpickr-calendar { border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: none; font-family: 'Poppins', sans-serif; z-index: 9999 !important; }
-        .flatpickr-time input:hover, .flatpickr-time .flatpickr-am-pm:hover, .flatpickr-time input:focus, .flatpickr-time .flatpickr-am-pm:focus { background: #f3f4f6; }
         
         .timeline-line::before {
             content: ''; position: absolute; top: 2rem; bottom: -2rem; left: 1rem; width: 2px; background: #e5e7eb; z-index: 0;
@@ -75,16 +74,57 @@
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        @keyframes ring-swing {
-            0% { transform: rotate(0deg); } 20% { transform: rotate(15deg); } 40% { transform: rotate(-10deg); }
-            60% { transform: rotate(5deg); } 80% { transform: rotate(-5deg); } 100% { transform: rotate(0deg); }
-        }
         .bell-ringing { animation: ring-swing 1.5s infinite ease-in-out; transform-origin: top center; color: #dc2626 !important; }
-        .slide-in-down { animation: slideInDown 0.5s ease-out forwards; }
-        @keyframes slideInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes ring-swing { 0% { transform: rotate(0deg); } 20% { transform: rotate(15deg); } 40% { transform: rotate(-10deg); } 60% { transform: rotate(5deg); } 80% { transform: rotate(-5deg); } 100% { transform: rotate(0deg); } }
+
+        /* --- iOS PICKER STYLES --- */
+        .ios-picker-wrapper {
+            display: flex;
+            justify-content: center;
+            height: 120px; /* Slightly shorter for compact view */
+            position: relative;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 20%, black 80%, transparent);
+            border: 1px solid #e5e7eb;
+        }
+        .ios-column {
+            flex: 1;
+            height: 100%;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            padding: 0;
+            text-align: center;
+            scrollbar-width: none;
+        }
+        .ios-column::-webkit-scrollbar { display: none; }
+        .ios-item {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            scroll-snap-align: center;
+            font-size: 16px; /* Slightly smaller font for side-by-side */
+            font-weight: 500;
+            color: #9ca3af;
+            transition: color 0.2s, font-weight 0.2s;
+        }
+        .ios-spacer { height: 40px; } /* Adjusted spacer based on wrapper height */
         
-        .mobile-tab-btn.active-tab span:first-child { font-weight: 800; }
+        .ios-highlight {
+            position: absolute;
+            top: 40px; /* Center of 120px */
+            left: 0;
+            right: 0;
+            height: 40px;
+            border-top: 1px solid #e5e7eb;
+            border-bottom: 1px solid #e5e7eb;
+            pointer-events: none;
+            z-index: 10;
+            background: rgba(0,0,0,0.02);
+        }
     </style>
 </head>
 <body class="text-gray-800 h-screen overflow-hidden flex flex-col bg-gray-50">
@@ -277,44 +317,34 @@
                     </div>
 
                     <div id="timeInputContainer" class="hidden transition-all duration-300 ease-in-out origin-top transform scale-y-95 opacity-0">
-                        <div class="grid grid-cols-2 gap-4">
+                         
+                        <div class="grid grid-cols-2 gap-3">
                             
-                            <div class="relative group">
+                            <div>
                                 <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1 text-center">Start</p>
-                                <input type="text" id="taskTimeFrom" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
-                                
-                                <div class="bg-gray-100 rounded-2xl p-2 flex items-center justify-center gap-1 border-2 border-transparent group-hover:border-blue-200 transition-colors">
-                                    <div id="visual-from-hour" class="bg-blue-600 text-white w-10 h-10 flex items-center justify-center rounded-lg font-black text-lg shadow-sm shadow-blue-300">
-                                        09
-                                    </div>
-                                    <span class="font-bold text-gray-400 text-lg">:</span>
-                                    <div id="visual-from-min" class="bg-white text-gray-800 w-10 h-10 flex items-center justify-center rounded-lg font-bold text-lg shadow-sm">
-                                        00
-                                    </div>
-                                    <div id="visual-from-ampm" class="bg-white text-gray-500 w-10 h-10 flex items-center justify-center rounded-lg font-bold text-xs shadow-sm ml-1 uppercase">
-                                        AM
-                                    </div>
+                                <div class="ios-picker-wrapper" id="picker-start">
+                                    <div class="ios-highlight"></div>
+                                    <div class="ios-column hours" id="start-hours"></div>
+                                    <div class="ios-column minutes" id="start-minutes"></div>
+                                    <div class="ios-column ampm" id="start-ampm"></div>
                                 </div>
                             </div>
 
-                            <div class="relative group">
+                            <div class="relative">
                                 <div class="flex justify-between items-center mb-1">
                                      <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest text-center w-full">End</p>
-                                     <button type="button" id="clearEndTimeBtn" onclick="clearTime('taskTimeTo', event)" class="hidden text-gray-400 hover:text-red-500 absolute right-0 -top-1 z-30"><i class="fa-solid fa-xmark"></i></button>
+                                     <button type="button" onclick="clearEndTime()" class="text-[9px] font-bold text-red-400 hover:text-red-600 bg-red-50 px-1.5 py-0.5 rounded z-20 absolute right-0 -top-0.5">CLR</button>
                                 </div>
-
-                                <input type="text" id="taskTimeTo" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
-                                
-                                <div class="bg-gray-100 rounded-2xl p-2 flex items-center justify-center gap-1 border-2 border-transparent group-hover:border-blue-200 transition-colors">
-                                    <div id="visual-to-hour" class="bg-blue-600 text-white w-10 h-10 flex items-center justify-center rounded-lg font-black text-lg shadow-sm shadow-blue-300">
-                                        10
-                                    </div>
-                                    <span class="font-bold text-gray-400 text-lg">:</span>
-                                    <div id="visual-to-min" class="bg-white text-gray-800 w-10 h-10 flex items-center justify-center rounded-lg font-bold text-lg shadow-sm">
-                                        00
-                                    </div>
-                                    <div id="visual-to-ampm" class="bg-white text-gray-500 w-10 h-10 flex items-center justify-center rounded-lg font-bold text-xs shadow-sm ml-1 uppercase">
-                                        AM
+                                <div class="ios-picker-wrapper" id="picker-end">
+                                    <div class="ios-highlight"></div>
+                                    <div class="ios-column hours" id="end-hours"></div>
+                                    <div class="ios-column minutes" id="end-minutes"></div>
+                                    <div class="ios-column ampm" id="end-ampm"></div>
+                                </div>
+                                <div id="endTimeOverlay" class="absolute inset-0 bg-white/50 z-20 hidden flex items-center justify-center backdrop-blur-[1px] rounded-xl border border-dashed border-gray-300 mt-[21px] h-[120px] cursor-pointer hover:bg-white/30 transition-colors">
+                                    <div class="flex flex-col items-center">
+                                        <i class="fa-regular fa-clock text-2xl text-gray-400 mb-1"></i>
+                                        <span class="text-[10px] font-bold text-gray-400">Tap to set</span>
                                     </div>
                                 </div>
                             </div>
@@ -339,19 +369,15 @@
             <div class="p-6">
                 <label class="block text-sm font-bold mb-2 text-gray-700" data-key="modal_new_date">New Date & Time</label>
                 <input type="text" id="newRescheduleDate" class="w-full p-3 border-2 border-blue-100 focus:border-blue-500 rounded-xl bg-blue-50 outline-none transition mb-4" placeholder="Select New Date">
-                <div class="flex gap-4 mb-6">
-                    <div class="flex-1 relative">
-                        <input type="text" id="rescheduleTimeFrom" class="w-full p-3 pl-8 border-2 border-blue-100 rounded-xl bg-blue-50 outline-none focus:border-blue-500 transition cursor-pointer text-sm" placeholder="From" readonly>
-                        <i class="fa-regular fa-clock absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-300"></i>
-                    </div>
-                    <div class="flex-1 relative">
-                        <input type="text" id="rescheduleTimeTo" class="w-full p-3 pl-8 border-2 border-blue-100 rounded-xl bg-blue-50 outline-none focus:border-blue-500 transition cursor-pointer text-sm" placeholder="To" readonly>
-                        <i class="fa-regular fa-clock absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-300"></i>
-                         <div class="absolute right-2 top-3 cursor-pointer text-blue-300 hover:text-red-400" onclick="clearTime('rescheduleTimeTo', event)">
-                            <i class="fa-solid fa-xmark text-[10px]"></i>
-                        </div>
-                    </div>
+                
+                 <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1 text-center">New Time</p>
+                 <div class="ios-picker-wrapper mb-6" id="picker-reschedule">
+                    <div class="ios-highlight"></div>
+                    <div class="ios-column hours" id="reschedule-hours"></div>
+                    <div class="ios-column minutes" id="reschedule-minutes"></div>
+                    <div class="ios-column ampm" id="reschedule-ampm"></div>
                 </div>
+
                 <div class="flex gap-3">
                     <button onclick="closeRescheduleModal()" class="flex-1 py-2 text-gray-500 hover:bg-gray-100 rounded-lg font-bold text-sm" data-key="btn_cancel">Cancel</button>
                     <button onclick="confirmReschedule()" class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-bold shadow-md transition" data-key="btn_confirm">Update</button>
@@ -421,82 +447,108 @@
         let currentMobileTab = 'today';
         let currentOpenedCourseId = null;
 
-        let datePicker, rescheduleDatePicker, timePickerFrom, timePickerTo, rescheduleTimePickerFrom, rescheduleTimePickerTo;
+        let datePicker, rescheduleDatePicker;
         let isTimeEnabled = false;
+        let isEndTimeSet = false;
 
         document.addEventListener('DOMContentLoaded', () => {
              datePicker = flatpickr("#taskDate", { dateFormat: "Y-m-d", disableMobile: "true" });
              rescheduleDatePicker = flatpickr("#newRescheduleDate", { dateFormat: "Y-m-d", disableMobile: "true" });
              
-             // --- VISUAL TIME PICKER LOGIC ---
+             // Init IOS Pickers
+             initIOSPicker('start');
+             initIOSPicker('end');
+             initIOSPicker('reschedule');
              
-             // Update visual blocks
-             const updateVisualWheel = (dateObj, prefix) => {
-                if (!dateObj) {
-                    document.getElementById(`visual-${prefix}-hour`).innerText = '--';
-                    document.getElementById(`visual-${prefix}-min`).innerText = '--';
-                    document.getElementById(`visual-${prefix}-ampm`).innerText = '--';
-                    return;
-                }
-                
-                let hours = dateObj.getHours();
-                const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-                const ampm = hours >= 12 ? 'PM' : 'AM';
-                
-                hours = hours % 12;
-                hours = hours ? hours : 12; 
-                const strHours = String(hours).padStart(2, '0');
-
-                document.getElementById(`visual-${prefix}-hour`).innerText = strHours;
-                document.getElementById(`visual-${prefix}-min`).innerText = minutes;
-                document.getElementById(`visual-${prefix}-ampm`).innerText = ampm;
-            };
-
-             timePickerFrom = flatpickr("#taskTimeFrom", { 
-                 enableTime: true, 
-                 noCalendar: true, 
-                 dateFormat: "h:i K", 
-                 time_24hr: false, 
-                 disableMobile: "true",
-                 onChange: (selectedDates) => {
-                    if(selectedDates[0]) updateVisualWheel(selectedDates[0], 'from');
-                 }
-             });
-             
-             timePickerTo = flatpickr("#taskTimeTo", { 
-                 enableTime: true, 
-                 noCalendar: true, 
-                 dateFormat: "h:i K", 
-                 time_24hr: false, 
-                 disableMobile: "true",
-                 onChange: (selectedDates) => {
-                    if(selectedDates[0]) {
-                        updateVisualWheel(selectedDates[0], 'to');
-                        document.getElementById('clearEndTimeBtn').classList.remove('hidden');
-                    } else {
-                        updateVisualWheel(null, 'to');
-                        document.getElementById('clearEndTimeBtn').classList.add('hidden');
-                    }
-                 }
-             });
-
-             rescheduleTimePickerFrom = flatpickr("#rescheduleTimeFrom", { enableTime: true, noCalendar: true, dateFormat: "h:i K", time_24hr: false, disableMobile: "true" });
-             rescheduleTimePickerTo = flatpickr("#rescheduleTimeTo", { enableTime: true, noCalendar: true, dateFormat: "h:i K", time_24hr: false, disableMobile: "true" });
-
              updateDate();
              renderContent();
-             
-             // Defaults for visual
-             updateVisualWheel(null, 'from');
-             updateVisualWheel(null, 'to');
         });
+
+        // --- CUSTOM IOS PICKER LOGIC ---
+        const PICKER_ITEM_HEIGHT = 40;
+
+        function createPickerItems(min, max, pad = true) {
+            let html = pad ? '<div class="ios-spacer"></div>' : '';
+            for(let i=min; i<=max; i++) {
+                let val = i < 10 ? '0'+i : i;
+                html += `<div class="ios-item" data-val="${val}">${val}</div>`;
+            }
+            html += pad ? '<div class="ios-spacer"></div>' : '';
+            return html;
+        }
+
+        function createPickerItemsArr(arr, pad = true) {
+            let html = pad ? '<div class="ios-spacer"></div>' : '';
+            arr.forEach(val => {
+                html += `<div class="ios-item" data-val="${val}">${val}</div>`;
+            });
+            html += pad ? '<div class="ios-spacer"></div>' : '';
+            return html;
+        }
+
+        function initIOSPicker(prefix) {
+            const h = document.getElementById(`${prefix}-hours`);
+            const m = document.getElementById(`${prefix}-minutes`);
+            const ap = document.getElementById(`${prefix}-ampm`);
+
+            if(h && m && ap) {
+                h.innerHTML = createPickerItems(1, 12);
+                m.innerHTML = createPickerItems(0, 59);
+                ap.innerHTML = createPickerItemsArr(['AM', 'PM']);
+                
+                // Set default 09:00 AM
+                scrollToVal(h, '09');
+                scrollToVal(m, '00');
+                scrollToVal(ap, 'AM');
+            }
+        }
+
+        function scrollToVal(container, val) {
+            const items = container.querySelectorAll('.ios-item');
+            let index = -1;
+            items.forEach((item, idx) => {
+                if(item.dataset.val == val) index = idx;
+            });
+            if(index > -1) {
+                container.scrollTop = index * PICKER_ITEM_HEIGHT;
+            }
+        }
         
+        function getPickerValue(prefix) {
+            const h = getScrollVal(document.getElementById(`${prefix}-hours`));
+            const m = getScrollVal(document.getElementById(`${prefix}-minutes`));
+            const ap = getScrollVal(document.getElementById(`${prefix}-ampm`));
+            return `${h}:${m} ${ap}`;
+        }
+
+        function getScrollVal(container) {
+            const index = Math.round(container.scrollTop / PICKER_ITEM_HEIGHT);
+            const items = container.querySelectorAll('.ios-item');
+            if(items[index]) return items[index].dataset.val;
+            return items[0].dataset.val;
+        }
+
+        function setPickerTime(prefix, timeStr) {
+             // Expects "09:30 AM"
+             if(!timeStr) return;
+             const [time, mod] = timeStr.split(' ');
+             const [hh, mm] = time.split(':');
+             
+             scrollToVal(document.getElementById(`${prefix}-hours`), hh);
+             scrollToVal(document.getElementById(`${prefix}-minutes`), mm);
+             scrollToVal(document.getElementById(`${prefix}-ampm`), mod);
+        }
+
+        function clearEndTime() {
+            isEndTimeSet = false;
+            document.getElementById('endTimeOverlay').classList.remove('hidden');
+        }
+
         function toggleTimeInput() {
             isTimeEnabled = !isTimeEnabled;
             const btn = document.getElementById('timeToggleBtn');
             const circle = document.getElementById('timeToggleCircle');
             const container = document.getElementById('timeInputContainer');
-            const inputFrom = document.getElementById('taskTimeFrom');
 
             if (isTimeEnabled) {
                 // Active state
@@ -509,11 +561,10 @@
                     container.classList.remove('scale-y-95', 'opacity-0');
                     container.classList.add('scale-y-100', 'opacity-100');
                 }, 10);
-
-                // Auto open picker if empty
-                if(!inputFrom.value) {
-                    timePickerFrom.open();
-                }
+                
+                // Default states
+                isEndTimeSet = false;
+                document.getElementById('endTimeOverlay').classList.remove('hidden');
 
             } else {
                 // Inactive state
@@ -527,19 +578,14 @@
                 setTimeout(() => {
                     container.classList.add('hidden');
                 }, 300);
-
-                timePickerFrom.clear();
-                timePickerTo.clear();
-                
-                // Reset Visuals
-                document.getElementById(`visual-from-hour`).innerText = '09';
-                document.getElementById(`visual-from-min`).innerText = '00';
-                document.getElementById(`visual-from-ampm`).innerText = 'AM';
-                document.getElementById(`visual-to-hour`).innerText = '10';
-                document.getElementById(`visual-to-min`).innerText = '00';
-                document.getElementById(`visual-to-ampm`).innerText = 'AM';
             }
         }
+        
+        // Hide End Time Overlay when clicked
+        document.getElementById('endTimeOverlay').addEventListener('click', function() {
+            this.classList.add('hidden');
+            isEndTimeSet = true;
+        });
 
         function updateDate() {
             document.getElementById('current-date').innerText = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -1309,11 +1355,19 @@
             const title = document.getElementById('taskTitle').value; 
             const category = document.getElementById('taskCategory').value; 
             const date = document.getElementById('taskDate').value; 
-            const timeFrom = document.getElementById('taskTimeFrom').value; 
-            const timeTo = document.getElementById('taskTimeTo').value; 
+            
+            let timeFrom = null;
+            let timeTo = null;
+
+            if(isTimeEnabled) {
+                timeFrom = getPickerValue('start');
+                if(isEndTimeSet) {
+                    timeTo = getPickerValue('end');
+                }
+            }
 
             if(!title) return; 
-            
+
             const loc = (category === 'work') ? workLocation : null; 
             const pType = (category === 'personal') ? personalSub : null; 
 
@@ -1322,8 +1376,8 @@
                 title, 
                 category, 
                 date, 
-                timeFrom: timeFrom || null, 
-                timeTo: timeTo || null, 
+                timeFrom: timeFrom, 
+                timeTo: timeTo, 
                 status: 'open', 
                 workLocation: loc, 
                 personalType: pType, 
@@ -1586,22 +1640,24 @@
             document.getElementById('rescheduleModal').classList.remove('hidden'); 
             rescheduleDatePicker.setDate(new Date()); 
             
-            rescheduleTimePickerFrom.clear();
-            rescheduleTimePickerTo.clear();
-
+            // Set current time in custom picker or default
             if(mode === 'single' && id) {
-                const task = tasks.find(t => t.id === id);
-                if(task) {
-                   if(task.timeFrom) rescheduleTimePickerFrom.setDate(task.timeFrom);
-                   if(task.timeTo) rescheduleTimePickerTo.setDate(task.timeTo);
-                }
+                 const task = tasks.find(t => t.id === id);
+                 if(task && task.timeFrom) {
+                     setPickerTime('reschedule', task.timeFrom);
+                 } else {
+                     setPickerTime('reschedule', '09:00 AM');
+                 }
+            } else {
+                 setPickerTime('reschedule', '09:00 AM');
             }
         }
         function closeRescheduleModal() { document.getElementById('rescheduleModal').classList.add('hidden'); taskToRescheduleId = null; if (rescheduleMode === 'batch' || rescheduleMode === 'single') checkOverduePopup(); }
         function confirmReschedule() { 
             const newDate = document.getElementById('newRescheduleDate').value; 
-            const newTimeFrom = document.getElementById('rescheduleTimeFrom').value;
-            const newTimeTo = document.getElementById('rescheduleTimeTo').value;
+            
+            // Get value from custom picker
+            const newTimeFrom = getPickerValue('reschedule');
 
             if(!newDate) return; 
             
@@ -1611,8 +1667,7 @@
                         return {
                             ...t, 
                             date: newDate,
-                            timeFrom: newTimeFrom || t.timeFrom,
-                            timeTo: newTimeTo || t.timeTo
+                            timeFrom: newTimeFrom || t.timeFrom
                         };
                     }
                     return t;
@@ -1622,8 +1677,7 @@
                 tasks = tasks.map(t => t.id === taskToRescheduleId ? {
                     ...t, 
                     date: newDate,
-                    timeFrom: newTimeFrom || null, 
-                    timeTo: newTimeTo || null
+                    timeFrom: newTimeFrom || null
                 } : t); 
             } 
             
@@ -1638,12 +1692,6 @@
             document.getElementById('taskTitle').value = ''; 
             if(datePicker) datePicker.clear();
             if(isTimeEnabled) toggleTimeInput(); 
-        }
-        
-        function clearTime(id, e) {
-            e.stopPropagation();
-            if(id === 'taskTimeTo' && timePickerTo) timePickerTo.clear();
-            if(id === 'rescheduleTimeTo' && rescheduleTimePickerTo) rescheduleTimePickerTo.clear();
         }
         
         function openModal(category) { 
